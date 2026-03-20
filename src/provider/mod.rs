@@ -204,6 +204,7 @@ pub fn create_provider(
             api_key, base_url,
         )?)),
         "openai" => Ok(Box::new(openai::OpenAiProvider::new(api_key, base_url)?)),
+        "gemini" => Ok(Box::new(gemini::GeminiProvider::new(api_key, base_url)?)),
         _ => anyhow::bail!("Unknown provider: {provider_name}"),
     }
 }

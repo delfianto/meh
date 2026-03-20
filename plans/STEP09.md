@@ -948,15 +948,17 @@ mod gemini_tests {
 ```
 
 ## Acceptance Criteria
-- [ ] Gemini SSE streaming works with `streamGenerateContent` endpoint
-- [ ] Text parts correctly emitted as `StreamChunk::Text`
-- [ ] Thinking parts (with `thought: true`) emitted as `StreamChunk::Thinking`
-- [ ] Thinking signatures preserved and forwarded
-- [ ] Function call parts emitted as `StreamChunk::ToolCallComplete`
-- [ ] Message conversion handles user, model, tool use, tool result, thinking, and images
-- [ ] Thinking budget configuration serialized as `thinkingConfig.thinkingBudget`
-- [ ] Usage metadata (including thought tokens and cached tokens) tracked
-- [ ] Cancellation via CancellationToken stops the stream
-- [ ] Provider factory handles "gemini" provider name
-- [ ] `cargo clippy -- -D warnings` passes
-- [ ] All unit tests pass
+- [x] Gemini SSE streaming works with `streamGenerateContent` endpoint
+- [x] Text parts correctly emitted as `StreamChunk::Text`
+- [x] Thinking parts (with `thought: true`) emitted as `StreamChunk::Thinking`
+- [x] Thinking signatures preserved and forwarded
+- [x] Function call parts emitted as `StreamChunk::ToolCallComplete`
+- [x] Message conversion handles user, model, tool use, tool result, thinking, and images
+- [x] Thinking budget configuration serialized as `thinkingConfig.thinkingBudget`
+- [x] Usage metadata (including thought tokens and cached tokens) tracked
+- [x] Cancellation via CancellationToken stops the stream
+- [x] Provider factory handles "gemini" provider name
+- [x] `cargo clippy -- -D warnings` passes
+- [x] All unit tests pass
+
+**Completed**: PR #6
