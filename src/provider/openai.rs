@@ -22,7 +22,7 @@ const DEFAULT_BASE_URL: &str = "https://api.openai.com";
 pub struct OpenAiProvider {
     client: reqwest::Client,
     api_key: String,
-    pub(crate) base_url: String,
+    pub base_url: String,
     model_info: ModelInfo,
     cancel: CancellationToken,
 }
@@ -149,7 +149,7 @@ impl Provider for OpenAiProvider {
 }
 
 /// Processes a single parsed SSE chunk and returns `StreamChunk` events.
-fn process_chunk(
+pub fn process_chunk(
     chunk: &ChatCompletionChunk,
     tool_calls: &mut HashMap<usize, (String, String, String)>,
 ) -> Vec<StreamChunk> {
@@ -232,7 +232,7 @@ fn process_chunk(
 }
 
 /// Converts internal [`Message`] list to `OpenAI` message format.
-fn convert_messages(messages: &[Message]) -> Vec<OaiMessage> {
+pub fn convert_messages(messages: &[Message]) -> Vec<OaiMessage> {
     let mut result = Vec::new();
 
     for msg in messages {
@@ -321,7 +321,7 @@ fn convert_messages(messages: &[Message]) -> Vec<OaiMessage> {
 }
 
 /// Converts [`ToolDefinition`] list to `OpenAI` tool format.
-fn convert_tools(tools: &[ToolDefinition]) -> Vec<OaiTool> {
+pub fn convert_tools(tools: &[ToolDefinition]) -> Vec<OaiTool> {
     tools
         .iter()
         .map(|t| OaiTool {
@@ -426,32 +426,32 @@ fn openai_model_info(model_id: &str) -> ModelInfo {
 // ── Request types ──────────────────────────────────────────────────
 
 #[derive(Serialize)]
-struct ChatCompletionRequest {
-    model: String,
-    messages: Vec<OaiMessage>,
+pub struct ChatCompletionRequest {
+    pub model: String,
+    pub messages: Vec<OaiMessage>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    temperature: Option<f64>,
-    max_tokens: Option<u32>,
-    stream: bool,
+    pub temperature: Option<f64>,
+    pub max_tokens: Option<u32>,
+    pub stream: bool,
     #[serde(skip_serializing_if = "Vec::is_empty")]
-    tools: Vec<OaiTool>,
+    pub tools: Vec<OaiTool>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    reasoning_effort: Option<String>,
+    pub reasoning_effort: Option<String>,
 }
 
 #[derive(Serialize)]
-struct OaiMessage {
-    role: String,
+pub struct OaiMessage {
+    pub role: String,
     #[serde(skip_serializing_if = "Option::is_none")]
-    content: Option<serde_json::Value>,
+    pub content: Option<serde_json::Value>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    tool_calls: Option<Vec<OaiToolCall>>,
+    pub tool_calls: Option<Vec<OaiToolCall>>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    tool_call_id: Option<String>,
+    pub tool_call_id: Option<String>,
 }
 
 #[derive(Serialize)]
-struct OaiToolCall {
+pub struct OaiToolCall {
     id: String,
     #[serde(rename = "type")]
     call_type: String,
@@ -459,20 +459,20 @@ struct OaiToolCall {
 }
 
 #[derive(Serialize)]
-struct OaiToolCallFunction {
+pub struct OaiToolCallFunction {
     name: String,
     arguments: String,
 }
 
 #[derive(Serialize)]
-struct OaiTool {
+pub struct OaiTool {
     #[serde(rename = "type")]
     tool_type: String,
     function: OaiFunction,
 }
 
 #[derive(Serialize)]
-struct OaiFunction {
+pub struct OaiFunction {
     name: String,
     description: String,
     parameters: serde_json::Value,
@@ -481,59 +481,59 @@ struct OaiFunction {
 // ── Streaming response types ───────────────────────────────────────
 
 #[derive(Deserialize)]
-struct ChatCompletionChunk {
+pub struct ChatCompletionChunk {
     #[allow(dead_code)]
-    id: Option<String>,
-    choices: Vec<ChunkChoice>,
+    pub id: Option<String>,
+    pub choices: Vec<ChunkChoice>,
     #[serde(default)]
-    usage: Option<ChunkUsage>,
+    pub usage: Option<ChunkUsage>,
 }
 
 #[derive(Deserialize)]
-struct ChunkChoice {
-    delta: ChunkDelta,
-    finish_reason: Option<String>,
+pub struct ChunkChoice {
+    pub delta: ChunkDelta,
+    pub finish_reason: Option<String>,
 }
 
 #[derive(Deserialize)]
-struct ChunkDelta {
+pub struct ChunkDelta {
     #[serde(default)]
-    content: Option<String>,
+    pub content: Option<String>,
     #[serde(default)]
-    tool_calls: Option<Vec<ChunkToolCall>>,
+    pub tool_calls: Option<Vec<ChunkToolCall>>,
     #[serde(default)]
-    reasoning: Option<String>,
+    pub reasoning: Option<String>,
 }
 
 #[derive(Deserialize)]
-struct ChunkToolCall {
-    index: usize,
+pub struct ChunkToolCall {
+    pub index: usize,
     #[serde(default)]
-    id: Option<String>,
+    pub id: Option<String>,
     #[serde(default)]
-    function: Option<ChunkFunction>,
+    pub function: Option<ChunkFunction>,
 }
 
 #[derive(Deserialize)]
-struct ChunkFunction {
+pub struct ChunkFunction {
     #[serde(default)]
-    name: Option<String>,
+    pub name: Option<String>,
     #[serde(default)]
-    arguments: Option<String>,
+    pub arguments: Option<String>,
 }
 
 #[derive(Deserialize)]
-struct ChunkUsage {
-    prompt_tokens: u64,
-    completion_tokens: u64,
+pub struct ChunkUsage {
+    pub prompt_tokens: u64,
+    pub completion_tokens: u64,
     #[serde(default)]
-    completion_tokens_details: Option<CompletionTokenDetails>,
+    pub completion_tokens_details: Option<CompletionTokenDetails>,
 }
 
 #[derive(Deserialize)]
-struct CompletionTokenDetails {
+pub struct CompletionTokenDetails {
     #[serde(default)]
-    reasoning_tokens: Option<u64>,
+    pub reasoning_tokens: Option<u64>,
 }
 
 #[cfg(test)]
