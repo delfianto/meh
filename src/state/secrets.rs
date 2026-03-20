@@ -58,8 +58,6 @@ mod tests {
         assert_eq!(store.service_name, "meh");
     }
 
-    // Keyring operations require a running secrets service.
-    // These tests are ignored by default — run with `cargo test -- --ignored`.
     #[test]
     #[ignore]
     fn secret_store_set_and_get() {
@@ -73,8 +71,6 @@ mod tests {
     #[test]
     fn secret_store_get_nonexistent_returns_none() {
         let store = SecretStore::new();
-        // This may or may not return None depending on the keyring backend,
-        // but it should never panic.
         let _ = store.get("definitely_nonexistent_key_12345");
     }
 }

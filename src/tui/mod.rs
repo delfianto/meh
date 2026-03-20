@@ -1,4 +1,30 @@
 //! Terminal UI management — setup, teardown, rendering.
+//!
+//! The TUI runs on a dedicated blocking thread (not a tokio task) to
+//! ensure crossterm's synchronous I/O never blocks the async runtime.
+//! It communicates with the Controller via MPSC channels.
+//!
+//! ```text
+//!   ┌─────────────────────────────────────────────────┐
+//!   │ status_bar: [PLAN|ACT] provider/model  tokens   │
+//!   ├─────────────────────────────────────────────────┤
+//!   │                                                 │
+//!   │  chat_view (scrollable)                         │
+//!   │  ├── User message                               │
+//!   │  ├── Assistant message (streaming...)           │
+//!   │  ├── [Thinking] (collapsible)                   │
+//!   │  ├── Tool Call: read_file("src/main.rs")        │
+//!   │  │   └── [Approve] [Deny] [Always Allow]        │
+//!   │  └── Tool Result: (contents)                    │
+//!   │                                                 │
+//!   ├─────────────────────────────────────────────────┤
+//!   │ input: multiline text area                      │
+//!   │   [Enter to send, Shift+Enter newline]          │
+//!   └─────────────────────────────────────────────────┘
+//! ```
+//!
+//! The `Tui` struct manages terminal lifecycle (raw mode, alternate screen)
+//! with RAII — the `Drop` impl restores the terminal even on panic.
 
 pub mod app_layout;
 pub mod chat_view;

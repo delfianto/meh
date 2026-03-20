@@ -1,6 +1,4 @@
 //! Meh — Terminal-based AI coding assistant
-// Allow dead code for stub modules not yet wired into the app.
-// Remove this as modules get implemented and connected.
 #![allow(dead_code)]
 
 mod agent;

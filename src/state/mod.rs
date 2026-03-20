@@ -1,4 +1,27 @@
 //! State management — in-memory cache backed by disk persistence.
+//!
+//! The `StateManager` is the single source of truth for application
+//! configuration and runtime state. It is `Clone`-friendly (Arc internals)
+//! so it can be shared across tokio tasks without explicit locking at
+//! the call site.
+//!
+//! ```text
+//!   StateManager (Clone → Arc<RwLock<StateInner>>)
+//!         │
+//!         ├── config.rs     ──► AppConfig (provider, model, mode, keys)
+//!         │                     loaded from config.toml, defaults on missing
+//!         │
+//!         ├── history.rs    ──► conversation/task history persistence
+//!         │                     JSON files in ~/.meh/history/
+//!         │
+//!         ├── secrets.rs    ──► API key storage via OS keyring
+//!         │
+//!         └── task_state.rs ──► per-task mutable counters (tokens, cost, etc.)
+//! ```
+//!
+//! Config changes are accumulated in memory (marked dirty) and flushed
+//! to disk on explicit `persist()` calls. This avoids write amplification
+//! from frequent updates during streaming.
 
 pub mod config;
 pub mod history;

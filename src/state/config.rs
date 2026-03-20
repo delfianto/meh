@@ -231,7 +231,6 @@ impl AppConfig {
             _ => return None,
         };
 
-        // Check env var first
         if let Some(ref env_var) = settings.api_key_env {
             if let Ok(val) = std::env::var(env_var) {
                 if !val.is_empty() {
@@ -240,7 +239,6 @@ impl AppConfig {
             }
         }
 
-        // Fall back to inline key
         settings.api_key.as_ref().filter(|k| !k.is_empty()).cloned()
     }
 }
@@ -296,7 +294,6 @@ mod tests {
 
     #[test]
     fn resolve_api_key_from_env() {
-        // Use PATH — a well-known env var that always exists and is non-empty.
         let config = AppConfig {
             provider: ProviderConfig {
                 anthropic: ProviderSettings {
@@ -333,7 +330,6 @@ mod tests {
 
     #[test]
     fn resolve_api_key_env_takes_precedence_over_inline() {
-        // Use PATH as env var — it exists and is non-empty, so it should win over inline.
         let config = AppConfig {
             provider: ProviderConfig {
                 anthropic: ProviderSettings {
@@ -347,13 +343,11 @@ mod tests {
         };
         let result = config.resolve_api_key("anthropic");
         assert!(result.is_some());
-        // Should be the PATH value, not "sk-inline"
         assert_ne!(result.unwrap(), "sk-inline");
     }
 
     #[test]
     fn resolve_api_key_nonexistent_env_falls_back_to_inline() {
-        // Use an env var that definitely doesn't exist.
         let config = AppConfig {
             provider: ProviderConfig {
                 anthropic: ProviderSettings {
