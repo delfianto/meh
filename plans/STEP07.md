@@ -789,13 +789,15 @@ mod e2e_tests {
 ```
 
 ## Acceptance Criteria
-- [ ] User types message -> Controller creates agent with provider -> Agent calls API
-- [ ] Streaming text appears character-by-character in TUI
-- [ ] Thinking content streams to TUI (displayed as dimmed text for now)
-- [ ] Tool calls are sent to controller as ToolCallRequest
-- [ ] Tool results flow back to agent and are included in next API call
-- [ ] Task completion message displayed in TUI
-- [ ] Agent cancellation (Ctrl+C) works cleanly
-- [ ] No deadlocks between agent <-> controller channels
-- [ ] `cargo clippy -- -D warnings` passes
-- [ ] `cargo test` all pass with mock provider
+- [x] User types message -> Controller creates agent with provider -> Agent calls API
+- [x] Streaming text appears character-by-character in TUI
+- [x] Thinking content streams to TUI (displayed as dimmed text for now)
+- [x] Tool calls are sent to controller as ToolCallRequest
+- [x] Tool results flow back to agent and are included in next API call
+- [x] Task completion message displayed in TUI
+- [x] Agent cancellation (Ctrl+C) works cleanly
+- [x] No deadlocks between agent <-> controller channels
+- [x] `cargo clippy -- -D warnings` passes
+- [x] `cargo test` all pass with mock provider
+
+**Completed**: PR #4

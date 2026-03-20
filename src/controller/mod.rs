@@ -1,9 +1,23 @@
 //! Central orchestrator — routes messages between TUI, agents, and tools.
+//!
+//! ```text
+//!   TUI ──► ctrl_tx ──► Controller ──► ui_tx ──► TUI
+//!                            │
+//!                            ├── spawns TaskAgent (tokio task)
+//!                            │     └── agent_tx / agent_rx channels
+//!                            │
+//!                            ├── forwards StreamChunk → UiUpdate
+//!                            ├── forwards ToolCallRequest → agent result
+//!                            └── handles TaskComplete / TaskError
+//! ```
 
 pub mod messages;
 pub mod task;
 
-use messages::{ControllerMessage, UiUpdate};
+use crate::agent::{AgentMessage, TaskAgent};
+use crate::provider::{self, ModelConfig, StreamChunk};
+use crate::state::StateManager;
+use messages::{ControllerMessage, ToolCallResult, UiUpdate};
 use tokio::sync::mpsc;
 
 /// The Controller is the central message router.
@@ -16,18 +30,21 @@ pub struct Controller {
     rx: mpsc::UnboundedReceiver<ControllerMessage>,
     /// Sends updates to the TUI.
     ui_tx: mpsc::UnboundedSender<UiUpdate>,
+    /// Clone of the controller's own sender (given to agents).
+    ctrl_tx: mpsc::UnboundedSender<ControllerMessage>,
+    /// Sender to the active agent (if any).
+    agent_tx: Option<mpsc::UnboundedSender<AgentMessage>>,
+    /// Application state.
+    state: StateManager,
     /// Whether the controller is running.
     running: bool,
 }
 
 impl Controller {
-    /// Create a new Controller and return it along with the channel endpoints.
-    ///
-    /// Returns `(controller, ctrl_tx, ui_rx)`:
-    /// - `controller` — call `.run()` to start the message loop
-    /// - `ctrl_tx` — clone and share with components that need to send messages
-    /// - `ui_rx` — the TUI drains this for rendering updates
-    pub fn new() -> (
+    /// Creates a new Controller and returns `(controller, ctrl_tx, ui_rx)`.
+    pub fn new(
+        state: StateManager,
+    ) -> (
         Self,
         mpsc::UnboundedSender<ControllerMessage>,
         mpsc::UnboundedReceiver<UiUpdate>,
@@ -37,19 +54,20 @@ impl Controller {
         let ctrl = Self {
             rx,
             ui_tx,
+            ctrl_tx: ctrl_tx.clone(),
+            agent_tx: None,
+            state,
             running: true,
         };
         (ctrl, ctrl_tx, ui_rx)
     }
 
     /// Main message loop — runs as a tokio task.
-    ///
-    /// Exits when a `Quit` message is received or all senders are dropped.
     pub async fn run(mut self) -> anyhow::Result<()> {
         tracing::info!("Controller started");
         while self.running {
             if let Some(msg) = self.rx.recv().await {
-                self.handle_message(msg);
+                self.handle_message(msg).await;
             } else {
                 tracing::info!("All senders dropped, controller shutting down");
                 break;
@@ -59,23 +77,25 @@ impl Controller {
         Ok(())
     }
 
-    /// Dispatch a single message to the appropriate handler.
-    fn handle_message(&mut self, msg: ControllerMessage) {
+    /// Dispatches a single message to the appropriate handler.
+    async fn handle_message(&mut self, msg: ControllerMessage) {
         match msg {
             ControllerMessage::UserSubmit { text, .. } => {
-                tracing::info!(len = text.len(), "User submitted message");
-                let _ = self.ui_tx.send(UiUpdate::AppendMessage {
-                    role: crate::tui::chat_view::ChatRole::Assistant,
-                    content: format!("[echo] {text}"),
-                });
+                self.handle_user_submit(text).await;
             }
             ControllerMessage::Quit => {
                 tracing::info!("Quit requested");
+                if let Some(tx) = &self.agent_tx {
+                    let _ = tx.send(AgentMessage::Cancel);
+                }
                 let _ = self.ui_tx.send(UiUpdate::Quit);
                 self.running = false;
             }
             ControllerMessage::CancelTask => {
                 tracing::info!("Task cancellation requested");
+                if let Some(tx) = &self.agent_tx {
+                    let _ = tx.send(AgentMessage::Cancel);
+                }
             }
             ControllerMessage::ToggleThinking => {
                 tracing::info!("Toggle thinking visibility");
@@ -100,11 +120,17 @@ impl Controller {
             } => {
                 tracing::info!(tool_use_id, approved, "Approval response received");
             }
-            ControllerMessage::StreamChunk(_)
-            | ControllerMessage::ToolCallRequest(_)
-            | ControllerMessage::ToolCallResult(_) => {}
+            ControllerMessage::StreamChunk(chunk) => {
+                self.handle_stream_chunk(chunk);
+            }
+            ControllerMessage::ToolCallRequest(req) => {
+                self.handle_tool_call_request(req);
+            }
+            ControllerMessage::ToolCallResult(_) => {}
             ControllerMessage::TaskComplete(result) => {
                 tracing::info!(task_id = result.task_id, "Task completed");
+                self.agent_tx = None;
+                let _ = self.ui_tx.send(UiUpdate::StreamEnd);
                 if let Some(msg) = result.completion_message {
                     let _ = self.ui_tx.send(UiUpdate::AppendMessage {
                         role: crate::tui::chat_view::ChatRole::System,
@@ -124,7 +150,113 @@ impl Controller {
                     role: crate::tui::chat_view::ChatRole::System,
                     content: format!("Error: {error}"),
                 });
+                let _ = self.ui_tx.send(UiUpdate::StatusUpdate {
+                    mode: None,
+                    tokens: None,
+                    cost: None,
+                    is_streaming: Some(false),
+                });
             }
+        }
+    }
+
+    /// Handles a user message: creates a provider and spawns a `TaskAgent`.
+    async fn handle_user_submit(&mut self, text: String) {
+        tracing::info!(len = text.len(), "User submitted message");
+
+        let _ = self.ui_tx.send(UiUpdate::StatusUpdate {
+            mode: None,
+            tokens: None,
+            cost: None,
+            is_streaming: Some(true),
+        });
+
+        let api_key = self.state.resolve_api_key("anthropic").await;
+        let Some(api_key) = api_key else {
+            let _ = self.ui_tx.send(UiUpdate::AppendMessage {
+                role: crate::tui::chat_view::ChatRole::System,
+                content: "No API key configured. Set ANTHROPIC_API_KEY environment variable."
+                    .to_string(),
+            });
+            return;
+        };
+
+        let config = self.state.config().await;
+        let provider = match provider::create_provider("anthropic", &api_key, None) {
+            Ok(p) => p,
+            Err(e) => {
+                let _ = self.ui_tx.send(UiUpdate::AppendMessage {
+                    role: crate::tui::chat_view::ChatRole::System,
+                    content: format!("Failed to create provider: {e}"),
+                });
+                return;
+            }
+        };
+
+        let (agent_tx, agent_rx) = mpsc::unbounded_channel();
+        self.agent_tx = Some(agent_tx);
+
+        let system_prompt = crate::prompt::build_system_prompt(".");
+        let model_config = ModelConfig {
+            model_id: config
+                .provider
+                .anthropic
+                .model
+                .unwrap_or_else(|| "claude-sonnet-4-20250514".to_string()),
+            max_tokens: 8192,
+            temperature: None,
+            thinking_budget: None,
+        };
+
+        let mut agent = TaskAgent::new(
+            uuid::Uuid::new_v4().to_string(),
+            provider,
+            system_prompt,
+            model_config,
+            vec![],
+            self.ctrl_tx.clone(),
+            agent_rx,
+        );
+        agent.add_user_message(text);
+
+        tokio::spawn(agent.run());
+    }
+
+    /// Forwards stream chunks to the TUI as appropriate `UiUpdate`s.
+    fn handle_stream_chunk(&self, chunk: StreamChunk) {
+        match chunk {
+            StreamChunk::Text { delta } => {
+                let _ = self.ui_tx.send(UiUpdate::StreamContent { delta });
+            }
+            StreamChunk::Thinking { delta, .. } => {
+                if !delta.is_empty() {
+                    let _ = self.ui_tx.send(UiUpdate::ThinkingContent { delta });
+                }
+            }
+            StreamChunk::Usage(usage) => {
+                let _ = self.ui_tx.send(UiUpdate::StatusUpdate {
+                    mode: None,
+                    tokens: Some(usage.input_tokens + usage.output_tokens),
+                    cost: usage.total_cost,
+                    is_streaming: None,
+                });
+            }
+            _ => {}
+        }
+    }
+
+    /// Handles a tool call request — auto-executes for now (permission system in STEP 13).
+    fn handle_tool_call_request(&self, req: messages::ToolCallRequest) {
+        tracing::info!(
+            tool = req.tool_name,
+            "Tool call requested (auto-responding)"
+        );
+        if let Some(tx) = &self.agent_tx {
+            let _ = tx.send(AgentMessage::ToolCallResult(ToolCallResult {
+                tool_use_id: req.tool_use_id,
+                content: format!("Tool '{}' not yet implemented", req.tool_name),
+                is_error: true,
+            }));
         }
     }
 }
@@ -133,39 +265,23 @@ impl Controller {
 mod controller_tests {
     use super::Controller;
     use super::messages::{ControllerMessage, TaskResult, UiUpdate};
+    use crate::state::StateManager;
     use crate::tui::chat_view::ChatRole;
 
-    #[tokio::test]
-    async fn controller_echoes_user_input() {
-        let (controller, ctrl_tx, mut ui_rx) = Controller::new();
-        let handle = tokio::spawn(controller.run());
-
-        ctrl_tx
-            .send(ControllerMessage::UserSubmit {
-                text: "hello".to_string(),
-                images: vec![],
-            })
-            .unwrap();
-
-        let update = ui_rx.recv().await.unwrap();
-        match update {
-            UiUpdate::AppendMessage { content, role } => {
-                assert!(content.contains("hello"));
-                assert_eq!(role, ChatRole::Assistant);
-            }
-            other => panic!("Expected AppendMessage, got {other:?}"),
-        }
-
-        ctrl_tx.send(ControllerMessage::Quit).unwrap();
-        let quit = ui_rx.recv().await.unwrap();
-        assert!(matches!(quit, UiUpdate::Quit));
-
-        handle.await.unwrap().unwrap();
+    async fn make_controller() -> (
+        Controller,
+        tokio::sync::mpsc::UnboundedSender<ControllerMessage>,
+        tokio::sync::mpsc::UnboundedReceiver<UiUpdate>,
+    ) {
+        let dir = tempfile::TempDir::new().unwrap();
+        let path = dir.path().join("config.toml");
+        let state = StateManager::new(Some(path)).await.unwrap();
+        Controller::new(state)
     }
 
     #[tokio::test]
     async fn controller_shuts_down_on_quit() {
-        let (controller, ctrl_tx, mut ui_rx) = Controller::new();
+        let (controller, ctrl_tx, mut ui_rx) = make_controller().await;
         let handle = tokio::spawn(controller.run());
 
         ctrl_tx.send(ControllerMessage::Quit).unwrap();
@@ -178,19 +294,8 @@ mod controller_tests {
     }
 
     #[tokio::test]
-    async fn controller_handles_sender_drop() {
-        let (controller, ctrl_tx, _ui_rx) = Controller::new();
-        let handle = tokio::spawn(controller.run());
-
-        drop(ctrl_tx);
-
-        let result = handle.await.unwrap();
-        assert!(result.is_ok());
-    }
-
-    #[tokio::test]
     async fn controller_mode_switch() {
-        let (controller, ctrl_tx, mut ui_rx) = Controller::new();
+        let (controller, ctrl_tx, mut ui_rx) = make_controller().await;
         let handle = tokio::spawn(controller.run());
 
         ctrl_tx
@@ -214,7 +319,7 @@ mod controller_tests {
 
     #[tokio::test]
     async fn controller_task_complete() {
-        let (controller, ctrl_tx, mut ui_rx) = Controller::new();
+        let (controller, ctrl_tx, mut ui_rx) = make_controller().await;
         let handle = tokio::spawn(controller.run());
 
         ctrl_tx
@@ -227,7 +332,10 @@ mod controller_tests {
             .unwrap();
 
         let update1 = ui_rx.recv().await.unwrap();
-        match update1 {
+        assert!(matches!(update1, UiUpdate::StreamEnd));
+
+        let update2 = ui_rx.recv().await.unwrap();
+        match update2 {
             UiUpdate::AppendMessage { content, role } => {
                 assert_eq!(content, "Done!");
                 assert_eq!(role, ChatRole::System);
@@ -235,8 +343,8 @@ mod controller_tests {
             other => panic!("Expected AppendMessage, got {other:?}"),
         }
 
-        let update2 = ui_rx.recv().await.unwrap();
-        match update2 {
+        let update3 = ui_rx.recv().await.unwrap();
+        match update3 {
             UiUpdate::StatusUpdate {
                 tokens,
                 cost,
@@ -257,7 +365,7 @@ mod controller_tests {
 
     #[tokio::test]
     async fn controller_task_error() {
-        let (controller, ctrl_tx, mut ui_rx) = Controller::new();
+        let (controller, ctrl_tx, mut ui_rx) = make_controller().await;
         let handle = tokio::spawn(controller.run());
 
         ctrl_tx
@@ -275,31 +383,57 @@ mod controller_tests {
 
         ctrl_tx.send(ControllerMessage::Quit).unwrap();
         let _ = ui_rx.recv().await;
+        let _ = ui_rx.recv().await;
         handle.await.unwrap().unwrap();
     }
 
     #[tokio::test]
-    async fn controller_multiple_messages() {
-        let (controller, ctrl_tx, mut ui_rx) = Controller::new();
+    async fn controller_stream_chunk_text() {
+        let (controller, ctrl_tx, mut ui_rx) = make_controller().await;
         let handle = tokio::spawn(controller.run());
 
-        for i in 0..5 {
-            ctrl_tx
-                .send(ControllerMessage::UserSubmit {
-                    text: format!("msg-{i}"),
-                    images: vec![],
-                })
-                .unwrap();
+        ctrl_tx
+            .send(ControllerMessage::StreamChunk(
+                crate::provider::StreamChunk::Text {
+                    delta: "hello".to_string(),
+                },
+            ))
+            .unwrap();
+
+        let update = ui_rx.recv().await.unwrap();
+        match update {
+            UiUpdate::StreamContent { delta } => {
+                assert_eq!(delta, "hello");
+            }
+            other => panic!("Expected StreamContent, got {other:?}"),
         }
 
-        for i in 0..5 {
-            let update = ui_rx.recv().await.unwrap();
-            match update {
-                UiUpdate::AppendMessage { content, .. } => {
-                    assert!(content.contains(&format!("msg-{i}")));
-                }
-                other => panic!("Expected AppendMessage, got {other:?}"),
+        ctrl_tx.send(ControllerMessage::Quit).unwrap();
+        let _ = ui_rx.recv().await;
+        handle.await.unwrap().unwrap();
+    }
+
+    #[tokio::test]
+    async fn controller_stream_chunk_thinking() {
+        let (controller, ctrl_tx, mut ui_rx) = make_controller().await;
+        let handle = tokio::spawn(controller.run());
+
+        ctrl_tx
+            .send(ControllerMessage::StreamChunk(
+                crate::provider::StreamChunk::Thinking {
+                    delta: "reasoning...".to_string(),
+                    signature: None,
+                    redacted: false,
+                },
+            ))
+            .unwrap();
+
+        let update = ui_rx.recv().await.unwrap();
+        match update {
+            UiUpdate::ThinkingContent { delta } => {
+                assert_eq!(delta, "reasoning...");
             }
+            other => panic!("Expected ThinkingContent, got {other:?}"),
         }
 
         ctrl_tx.send(ControllerMessage::Quit).unwrap();

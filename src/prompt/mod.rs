@@ -26,3 +26,32 @@ pub mod context;
 pub mod environment;
 pub mod rules;
 pub mod tools_section;
+
+/// Builds the system prompt for the task agent.
+///
+/// This is a minimal implementation; STEP 37 will assemble
+/// the full modular prompt from all submodules.
+pub fn build_system_prompt(cwd: &str) -> String {
+    format!(
+        "You are a helpful AI coding assistant running in a terminal.\n\
+         The user's working directory is: {cwd}\n\
+         Respond concisely and helpfully."
+    )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn build_system_prompt_contains_cwd() {
+        let prompt = build_system_prompt("/home/user/project");
+        assert!(prompt.contains("/home/user/project"));
+    }
+
+    #[test]
+    fn build_system_prompt_not_empty() {
+        let prompt = build_system_prompt("/tmp");
+        assert!(!prompt.is_empty());
+    }
+}

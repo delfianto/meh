@@ -42,3 +42,5 @@
 
 pub mod sub_agent;
 pub mod task_agent;
+
+pub use task_agent::{AgentMessage, TaskAgent};

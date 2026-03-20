@@ -80,13 +80,7 @@ impl Provider for AnthropicProvider {
             } else {
                 config.temperature
             },
-            system: vec![SystemBlock {
-                block_type: "text".to_string(),
-                text: system_prompt.to_string(),
-                cache_control: Some(CacheControl {
-                    control_type: "ephemeral".to_string(),
-                }),
-            }],
+            system: system_prompt.to_string(),
             messages: convert_messages(messages),
             tools: convert_tools(tools),
             stream: true,
@@ -317,28 +311,13 @@ struct ApiRequest {
     max_tokens: u32,
     #[serde(skip_serializing_if = "Option::is_none")]
     temperature: Option<f64>,
-    system: Vec<SystemBlock>,
+    system: String,
     messages: Vec<ApiMessage>,
     #[serde(skip_serializing_if = "Vec::is_empty")]
     tools: Vec<ApiTool>,
     stream: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     thinking: Option<ThinkingConfig>,
-}
-
-#[derive(Serialize)]
-struct SystemBlock {
-    #[serde(rename = "type")]
-    block_type: String,
-    text: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    cache_control: Option<CacheControl>,
-}
-
-#[derive(Serialize)]
-struct CacheControl {
-    #[serde(rename = "type")]
-    control_type: String,
 }
 
 #[derive(Serialize)]
@@ -580,13 +559,7 @@ mod tests {
             model: "claude-sonnet-4-20250514".to_string(),
             max_tokens: 8192,
             temperature: None,
-            system: vec![SystemBlock {
-                block_type: "text".to_string(),
-                text: "You are helpful.".to_string(),
-                cache_control: Some(CacheControl {
-                    control_type: "ephemeral".to_string(),
-                }),
-            }],
+            system: "You are helpful.".to_string(),
             messages: vec![],
             tools: vec![],
             stream: true,
@@ -597,6 +570,7 @@ mod tests {
         };
         let json = serde_json::to_value(&request).unwrap();
         assert_eq!(json["model"], "claude-sonnet-4-20250514");
+        assert_eq!(json["system"], "You are helpful.");
         assert_eq!(json["thinking"]["budget_tokens"], 10000);
         assert!(json["stream"].as_bool().unwrap());
     }
@@ -607,7 +581,7 @@ mod tests {
             model: "claude-sonnet-4-20250514".to_string(),
             max_tokens: 4096,
             temperature: Some(0.7),
-            system: vec![],
+            system: String::new(),
             messages: vec![],
             tools: vec![],
             stream: true,

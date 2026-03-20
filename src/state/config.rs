@@ -67,6 +67,9 @@ pub struct ProviderSettings {
     /// Custom base URL (for proxies/self-hosted).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub base_url: Option<String>,
+    /// Model ID override.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub model: Option<String>,
 }
 
 /// Mode configuration.

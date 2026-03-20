@@ -22,7 +22,7 @@ pub struct App {
 }
 
 impl App {
-    /// Create a new application instance from CLI arguments.
+    /// Creates a new application instance from CLI arguments.
     pub async fn new(cli: Cli) -> anyhow::Result<Self> {
         let state = StateManager::new(cli.config.clone()).await?;
         let config = state.config().await;
@@ -30,11 +30,11 @@ impl App {
         Ok(Self { cli, state })
     }
 
-    /// Run the application main loop.
+    /// Runs the application main loop.
     pub async fn run(self) -> anyhow::Result<()> {
         tracing::info!("meh starting up");
 
-        let (controller, ctrl_tx, ui_rx) = Controller::new();
+        let (controller, ctrl_tx, ui_rx) = Controller::new(self.state.clone());
 
         let controller_handle = tokio::spawn(controller.run());
 
@@ -50,12 +50,32 @@ impl App {
     }
 }
 
-/// Apply a single UI update to the TUI state.
-/// Returns `true` if the app should quit.
+/// Tracks whether we're currently in a streaming assistant message.
+struct StreamState {
+    is_streaming: bool,
+}
+
+impl StreamState {
+    /// Ensures a streaming assistant message exists in the chat.
+    fn ensure_streaming_message(&mut self, chat_state: &mut ChatViewState) {
+        if !self.is_streaming {
+            chat_state.push_message(ChatMessage {
+                role: ChatRole::Assistant,
+                content: String::new(),
+                timestamp: chrono::Utc::now(),
+                streaming: true,
+            });
+            self.is_streaming = true;
+        }
+    }
+}
+
+/// Applies a single UI update to the TUI state. Returns `true` if the app should quit.
 fn apply_ui_update(
     update: UiUpdate,
     chat_state: &mut ChatViewState,
     status: &mut StatusBarState,
+    stream_state: &mut StreamState,
 ) -> bool {
     match update {
         UiUpdate::AppendMessage { role, content } => {
@@ -66,7 +86,8 @@ fn apply_ui_update(
                 streaming: false,
             });
         }
-        UiUpdate::StreamContent { delta } => {
+        UiUpdate::StreamContent { delta } | UiUpdate::ThinkingContent { delta } => {
+            stream_state.ensure_streaming_message(chat_state);
             if let Some(last) = chat_state.messages.last_mut() {
                 last.content.push_str(&delta);
             }
@@ -75,6 +96,7 @@ fn apply_ui_update(
             if let Some(last) = chat_state.messages.last_mut() {
                 last.streaming = false;
             }
+            stream_state.is_streaming = false;
         }
         UiUpdate::StatusUpdate {
             mode,
@@ -95,17 +117,13 @@ fn apply_ui_update(
                 status.is_streaming = s;
             }
         }
-        UiUpdate::ThinkingContent { .. } | UiUpdate::ToolApproval { .. } => {}
+        UiUpdate::ToolApproval { .. } => {}
         UiUpdate::Quit => return true,
     }
     false
 }
 
 /// The TUI event loop. Runs on a blocking thread.
-///
-/// This function owns the terminal and handles rendering the UI,
-/// polling for keyboard/mouse events, and draining UI updates
-/// from the controller.
 fn run_tui(
     ctrl_tx: &mpsc::UnboundedSender<ControllerMessage>,
     mut ui_rx: mpsc::UnboundedReceiver<UiUpdate>,
@@ -121,6 +139,9 @@ fn run_tui(
         provider: default_provider.to_string(),
         total_tokens: 0,
         total_cost: 0.0,
+        is_streaming: false,
+    };
+    let mut stream_state = StreamState {
         is_streaming: false,
     };
 
@@ -146,7 +167,7 @@ fn run_tui(
 
     loop {
         while let Ok(update) = ui_rx.try_recv() {
-            if apply_ui_update(update, &mut chat_state, &mut status) {
+            if apply_ui_update(update, &mut chat_state, &mut status, &mut stream_state) {
                 tui.restore()?;
                 return Ok(());
             }
