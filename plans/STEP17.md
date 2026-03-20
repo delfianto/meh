@@ -241,12 +241,14 @@ mod mode_tests {
 ```
 
 ## Acceptance Criteria
-- [ ] Tasks can start in Plan or Act mode based on config
-- [ ] Plan mode restricts tools to ReadOnly + Informational only
-- [ ] plan_mode_respond tool presents plan and optionally requests mode switch
-- [ ] Mode switch rebuilds tool set and system prompt
-- [ ] Status bar shows current mode
-- [ ] Strict plan mode enforced when configured
-- [ ] CLI --mode flag works
-- [ ] `cargo clippy -- -D warnings` passes
-- [ ] All tests pass
+- [x] Tasks can start in Plan or Act mode based on config
+- [x] Plan mode restricts tools to ReadOnly + Informational only
+- [x] plan_mode_respond tool presents plan and optionally requests mode switch (handler in step 16)
+- [ ] Mode switch rebuilds tool set and system prompt (agent integration deferred)
+- [ ] Status bar shows current mode (TUI integration deferred)
+- [ ] Strict plan mode enforced when configured (controller integration deferred)
+- [ ] CLI --mode flag works (CLI integration deferred)
+- [x] `cargo clippy -- -D warnings` passes
+- [x] All tests pass (9 new test cases)
+
+**Completed**: PR #14

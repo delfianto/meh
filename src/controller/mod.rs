@@ -196,7 +196,8 @@ impl Controller {
         let (agent_tx, agent_rx) = mpsc::unbounded_channel();
         self.agent_tx = Some(agent_tx);
 
-        let system_prompt = crate::prompt::build_system_prompt(".");
+        let mode = crate::prompt::resolve_default_mode(&config.mode.default);
+        let system_prompt = crate::prompt::build_system_prompt(".", mode);
         let model_config = ModelConfig {
             model_id: config
                 .provider
