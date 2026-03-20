@@ -344,14 +344,16 @@ mod handler_tests {
 ```
 
 ## Acceptance Criteria
-- [ ] Command permission validation: allow/deny glob patterns, deny precedence
-- [ ] Dangerous character detection (backticks outside single quotes)
-- [ ] Redirect blocking (default off, configurable)
-- [ ] Command segment splitting (&&, ||, |, ;)
-- [ ] Subprocess execution with stdout/stderr capture
-- [ ] Timeout management (30s default, 300s for long-running)
-- [ ] Process killed on timeout
-- [ ] Output truncation for very large outputs (>100KB)
-- [ ] execute_command handler wires everything together
-- [ ] `cargo clippy -- -D warnings` passes
-- [ ] All tests pass (20+ test cases)
+- [x] Command permission validation: allow/deny glob patterns, deny precedence
+- [x] Dangerous character detection (backticks outside single quotes)
+- [x] Redirect blocking (default off, configurable)
+- [x] Command segment splitting (&&, ||, |, ;)
+- [x] Subprocess execution with stdout/stderr capture
+- [x] Timeout management (30s default, 300s for long-running)
+- [x] Process killed on timeout
+- [x] Output truncation for very large outputs (>100KB)
+- [x] execute_command handler wires everything together
+- [x] `cargo clippy -- -D warnings` passes
+- [x] All tests pass (27 test cases)
+
+**Completed**: PR #12
