@@ -1419,25 +1419,27 @@ mod path_tests {
 ```
 
 ## Acceptance Criteria
-- [ ] read_file reads files with line numbers in `{line_no}\t{content}` format
-- [ ] read_file supports line_start and line_end for partial reads
-- [ ] read_file includes file metadata header (path, line count or range)
-- [ ] read_file returns helpful errors for missing files, permission denied, invalid ranges
-- [ ] read_file handles empty files gracefully
-- [ ] list_files shows directory contents with directories first, then files alphabetically
-- [ ] list_files shows file sizes in human-readable format
-- [ ] list_files handles recursive traversal with depth limit (5) and entry limit (500)
-- [ ] list_files respects ignore patterns (node_modules, .git, target, etc.)
-- [ ] list_files shows truncation notice when entry limit is reached
-- [ ] search_files finds regex matches with file:line:content format grouped by file
-- [ ] search_files supports file_pattern glob filtering
-- [ ] search_files skips binary files (null byte detection)
-- [ ] search_files skips files larger than 1MB
-- [ ] search_files limits to max_results (default 50)
-- [ ] search_files returns match count summary
-- [ ] All handlers return ToolResponse (never panic on bad input)
-- [ ] Path resolution works for both relative and absolute paths
-- [ ] should_ignore covers all common patterns
-- [ ] is_likely_binary covers common binary extensions
-- [ ] `cargo clippy -- -D warnings` passes
-- [ ] All tests pass (30+ test cases across all handlers and utilities)
+- [x] read_file reads files with line numbers in `{line_no}\t{content}` format
+- [x] read_file supports line_start and line_end for partial reads
+- [x] read_file includes file metadata header (path, line count or range)
+- [x] read_file returns helpful errors for missing files, permission denied, invalid ranges
+- [x] read_file handles empty files gracefully
+- [x] list_files shows directory contents with directories first, then files alphabetically
+- [x] list_files shows file sizes in human-readable format
+- [x] list_files handles recursive traversal with depth limit (5) and entry limit (500)
+- [x] list_files respects ignore patterns (node_modules, .git, target, etc.)
+- [x] list_files shows truncation notice when entry limit is reached
+- [x] search_files finds regex matches with file:line:content format grouped by file
+- [x] search_files supports file_pattern glob filtering
+- [x] search_files skips binary files (null byte detection)
+- [x] search_files skips files larger than 1MB
+- [x] search_files limits to max_results (default 50)
+- [x] search_files returns match count summary
+- [x] All handlers return ToolResponse (never panic on bad input)
+- [x] Path resolution works for both relative and absolute paths
+- [x] should_ignore covers all common patterns
+- [x] is_likely_binary covers common binary extensions
+- [x] `cargo clippy -- -D warnings` passes
+- [x] All tests pass (44 new test cases across all handlers and utilities)
+
+**Completed**: PR #9
