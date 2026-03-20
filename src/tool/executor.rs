@@ -1,6 +1,7 @@
 //! Tool executor — runs a tool handler by name.
 
 use crate::tool::{ToolContext, ToolRegistry, ToolResponse};
+use std::sync::Arc;
 
 /// Execute a tool by name with the given parameters.
 /// Returns a `ToolResponse`. If the tool is not found, returns an error response.
@@ -16,6 +17,32 @@ pub async fn execute_tool(
             Err(e) => ToolResponse::error(format!("Tool execution failed: {e}")),
         },
         None => ToolResponse::error(format!("Unknown tool: {tool_name}")),
+    }
+}
+
+/// Struct-based tool executor that wraps a shared registry.
+pub struct ToolExecutor {
+    registry: Arc<ToolRegistry>,
+}
+
+impl ToolExecutor {
+    /// Create a new executor wrapping the given registry.
+    pub const fn new(registry: Arc<ToolRegistry>) -> Self {
+        Self { registry }
+    }
+
+    /// Execute a tool by name with the given arguments.
+    pub async fn execute(
+        &self,
+        tool_name: &str,
+        arguments: serde_json::Value,
+        ctx: &ToolContext,
+    ) -> anyhow::Result<ToolResponse> {
+        let handler = self
+            .registry
+            .get(tool_name)
+            .ok_or_else(|| anyhow::anyhow!("Unknown tool: {tool_name}"))?;
+        handler.execute(arguments, ctx).await
     }
 }
 
@@ -116,5 +143,38 @@ mod tests {
         let result = execute_tool(&reg, "fail", serde_json::json!({}), &ctx).await;
         assert!(result.is_error);
         assert!(result.content.contains("execution failed"));
+    }
+
+    #[tokio::test]
+    async fn test_executor_routes_to_handler() {
+        let registry = ToolRegistry::with_defaults();
+        let executor = ToolExecutor::new(Arc::new(registry));
+        let ctx = ToolContext {
+            cwd: "/tmp".to_string(),
+            auto_approved: false,
+        };
+        let result = executor
+            .execute(
+                "read_file",
+                serde_json::json!({"path": "/nonexistent"}),
+                &ctx,
+            )
+            .await
+            .unwrap();
+        assert!(result.is_error);
+    }
+
+    #[tokio::test]
+    async fn test_executor_unknown_tool() {
+        let registry = ToolRegistry::with_defaults();
+        let executor = ToolExecutor::new(Arc::new(registry));
+        let ctx = ToolContext {
+            cwd: "/tmp".to_string(),
+            auto_approved: false,
+        };
+        let result = executor
+            .execute("nonexistent_tool", serde_json::json!({}), &ctx)
+            .await;
+        assert!(result.is_err());
     }
 }
