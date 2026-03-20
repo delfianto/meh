@@ -28,7 +28,7 @@
 
 | Step | File | Description | Status | Notes |
 |------|------|-------------|--------|-------|
-| 11 | [STEP11.md](STEP11.md) | ToolHandler trait + registry | `[ ]` | Depends on: 01–04 |
+| 11 | [STEP11.md](STEP11.md) | ToolHandler trait + registry | `[x]` | PR #8 |
 | 12 | [STEP12.md](STEP12.md) | Read-only tools (read_file, list_files, search_files) | `[ ]` | Depends on: 11 |
 | 13 | [STEP13.md](STEP13.md) | Permission system (ask mode) | `[ ]` | Depends on: 11, 04 |
 | 14 | [STEP14.md](STEP14.md) | Write tools (write_file, apply_patch) | `[ ]` | Depends on: 11, 13 |
@@ -79,11 +79,11 @@
 |-------|-------|-------------|-------------|----------|---------|
 | 1. Foundation | 4 | 0 | 0 | 4 | 0 |
 | 2. Providers | 6 | 0 | 0 | 6 | 0 |
-| 3. Tools | 6 | 6 | 0 | 0 | 0 |
+| 3. Tools | 6 | 5 | 0 | 1 | 0 |
 | 4. Advanced | 8 | 8 | 0 | 0 | 0 |
 | 5. Polish | 6 | 6 | 0 | 0 | 0 |
 | 6. Critical | 7 | 7 | 0 | 0 | 0 |
-| **Total** | **37** | **27** | **0** | **10** | **0** |
+| **Total** | **37** | **26** | **0** | **11** | **0** |
 
 ---
 

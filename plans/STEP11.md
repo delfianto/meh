@@ -693,16 +693,18 @@ mod executor_tests {
 ```
 
 ## Acceptance Criteria
-- [ ] `ToolHandler` trait defined with name, description, execute, requires_approval, category, input_schema
-- [ ] `ToolRegistry` supports register, get, names, len, is_empty, tool_definitions, tool_definitions_filtered
-- [ ] `ToolRegistry::with_defaults()` registers all built-in handler stubs
-- [ ] Tool definitions exportable as XML (for non-native tool calling providers)
-- [ ] Tool definitions exportable as `Vec<ToolDefinition>` (for native tool calling)
-- [ ] `tools_summary()` produces readable one-line-per-tool output
-- [ ] `execute_tool()` handles unknown tools gracefully with error response
-- [ ] `execute_tool()` handles handler panics/errors gracefully
-- [ ] Plan mode filtering excludes FileWrite and Command categories
-- [ ] Tool names and definitions are deterministically sorted
-- [ ] Stub handlers exist for all tools not yet implemented (return error response)
-- [ ] `cargo clippy -- -D warnings` passes
-- [ ] All tests pass (20+ test cases)
+- [x] `ToolHandler` trait defined with name, description, execute, requires_approval, category, input_schema
+- [x] `ToolRegistry` supports register, get, names, len, is_empty, tool_definitions, tool_definitions_filtered
+- [x] `ToolRegistry::with_defaults()` registers all built-in handler stubs
+- [x] Tool definitions exportable as XML (for non-native tool calling providers)
+- [x] Tool definitions exportable as `Vec<ToolDefinition>` (for native tool calling)
+- [x] `tools_summary()` produces readable one-line-per-tool output
+- [x] `execute_tool()` handles unknown tools gracefully with error response
+- [x] `execute_tool()` handles handler panics/errors gracefully
+- [x] Plan mode filtering excludes FileWrite and Command categories
+- [x] Tool names and definitions are deterministically sorted
+- [x] Stub handlers exist for all tools not yet implemented (return error response)
+- [x] `cargo clippy -- -D warnings` passes
+- [x] All tests pass (24 test cases)
+
+**Completed**: PR #8
