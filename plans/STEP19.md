@@ -299,13 +299,15 @@ mod thinking_view_tests {
 ```
 
 ## Acceptance Criteria
-- [ ] Thinking blocks displayed inline in chat with dimmed italic style
-- [ ] Blocks auto-collapse after streaming ends
-- [ ] Ctrl+T toggles all thinking visibility globally
-- [ ] Individual blocks can be toggled collapsed/expanded
-- [ ] Streaming thinking shows live content with "..." indicator
-- [ ] Redacted thinking shows placeholder text
-- [ ] Token count estimate shown in collapsed header
-- [ ] Works correctly with scrolling
-- [ ] `cargo clippy -- -D warnings` passes
-- [ ] All tests pass
+- [ ] Thinking blocks displayed inline in chat with dimmed italic style (TUI rendering deferred)
+- [x] Blocks auto-collapse after streaming ends
+- [x] Ctrl+T toggles all thinking visibility globally (state logic)
+- [x] Individual blocks can be toggled collapsed/expanded
+- [x] Streaming thinking shows live content with "..." indicator (state + headers)
+- [x] Redacted thinking shows placeholder text
+- [x] Token count estimate shown in collapsed header
+- [ ] Works correctly with scrolling (TUI rendering deferred)
+- [x] `cargo clippy -- -D warnings` passes
+- [x] All tests pass (21 test cases)
+
+**Completed**: PR #16
