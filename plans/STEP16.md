@@ -225,11 +225,13 @@ mod plan_mode_tests {
 ```
 
 ## Acceptance Criteria
-- [ ] ask_followup_question extracts question, returns it
-- [ ] attempt_completion extracts result and optional command
-- [ ] plan_mode_respond extracts response and switch_to_act flag
-- [ ] All three tools are Informational category (no approval needed)
-- [ ] Agent handles these tools specially (user interaction, mode switch)
-- [ ] Missing required params return error
-- [ ] `cargo clippy -- -D warnings` passes
-- [ ] All tests pass
+- [x] ask_followup_question extracts question, returns it
+- [x] attempt_completion extracts result and optional command
+- [x] plan_mode_respond extracts response and switch_to_act flag
+- [x] All three tools are Informational category (no approval needed)
+- [ ] Agent handles these tools specially (user interaction, mode switch) — deferred to agent integration
+- [x] Missing required params return error
+- [x] `cargo clippy -- -D warnings` passes
+- [x] All tests pass (15 test cases)
+
+**Completed**: PR #13

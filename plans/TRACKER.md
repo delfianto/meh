@@ -33,7 +33,7 @@
 | 13 | [STEP13.md](STEP13.md) | Permission system (ask mode) | `[x]` | PR #10 |
 | 14 | [STEP14.md](STEP14.md) | Write tools (write_file, apply_patch) | `[x]` | PR #11 |
 | 15 | [STEP15.md](STEP15.md) | execute_command handler | `[x]` | PR #12 |
-| 16 | [STEP16.md](STEP16.md) | Informational tools (ask_followup, attempt_completion) | `[ ]` | Depends on: 11, 04 |
+| 16 | [STEP16.md](STEP16.md) | Informational tools (ask_followup, attempt_completion) | `[x]` | PR #13 |
 
 ## Phase 4: Advanced Features
 
@@ -79,11 +79,11 @@
 |-------|-------|-------------|-------------|----------|---------|
 | 1. Foundation | 4 | 0 | 0 | 4 | 0 |
 | 2. Providers | 6 | 0 | 0 | 6 | 0 |
-| 3. Tools | 6 | 1 | 0 | 5 | 0 |
+| 3. Tools | 6 | 0 | 0 | 6 | 0 |
 | 4. Advanced | 8 | 8 | 0 | 0 | 0 |
 | 5. Polish | 6 | 6 | 0 | 0 | 0 |
 | 6. Critical | 7 | 7 | 0 | 0 | 0 |
-| **Total** | **37** | **22** | **0** | **15** | **0** |
+| **Total** | **37** | **21** | **0** | **16** | **0** |
 
 ---
 
