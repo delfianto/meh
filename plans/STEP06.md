@@ -1175,17 +1175,19 @@ mod stream_processor_tests {
 ```
 
 ## Acceptance Criteria
-- [ ] `ToolCallTracker` correctly accumulates partial JSON fragments and parses on finalize
-- [ ] `PartialToolCall::partial_fields()` extracts key-value pairs from incomplete JSON via regex
-- [ ] `ThinkingAccumulator` tracks content, signatures, and redacted state across append/finalize/reset
-- [ ] `ChunkBatcher` debounces text updates within configurable time interval
-- [ ] `ChunkBatcher::force_flush()` always returns content regardless of timing
-- [ ] `StreamProcessor` produces correct event sequence for: text-only, thinking-then-text, tool calls, errors
-- [ ] Thinking auto-finalizes when text or tool call starts
-- [ ] Text buffer auto-flushes when tool call starts
-- [ ] `StreamProcessor::finish()` returns all remaining buffered events
-- [ ] `StreamProcessor::reset()` clears all state for reuse
-- [ ] Multiple tool calls can be tracked simultaneously
-- [ ] `cargo clippy -- -D warnings` passes
-- [ ] `cargo test` passes all unit and integration tests
-- [ ] No unnecessary allocations in the hot path beyond string accumulation
+- [x] `ToolCallTracker` correctly accumulates partial JSON fragments and parses on finalize
+- [x] `PartialToolCall::partial_fields()` extracts key-value pairs from incomplete JSON via regex
+- [x] `ThinkingAccumulator` tracks content, signatures, and redacted state across append/finalize/reset
+- [x] `ChunkBatcher` debounces text updates within configurable time interval
+- [x] `ChunkBatcher::force_flush()` always returns content regardless of timing
+- [x] `StreamProcessor` produces correct event sequence for: text-only, thinking-then-text, tool calls, errors
+- [x] Thinking auto-finalizes when text or tool call starts
+- [x] Text buffer auto-flushes when tool call starts
+- [x] `StreamProcessor::finish()` returns all remaining buffered events
+- [x] `StreamProcessor::reset()` clears all state for reuse
+- [x] Multiple tool calls can be tracked simultaneously
+- [x] `cargo clippy -- -D warnings` passes
+- [x] `cargo test` passes all unit and integration tests
+- [x] No unnecessary allocations in the hot path beyond string accumulation
+
+**Completed**: PR #3
