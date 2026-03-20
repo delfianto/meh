@@ -585,14 +585,16 @@ mod openrouter_tests {
 ```
 
 ## Acceptance Criteria
-- [ ] OpenRouter streaming works with OpenAI-compatible format
-- [ ] Reasoning chunks from `delta.reasoning` emitted as `StreamChunk::Thinking`
-- [ ] Fallback usage fetch via `/v1/generation?id={id}` endpoint works
-- [ ] Error detection handles both `finish_reason: "error"` and top-level `error` object
-- [ ] Proper headers sent: `Authorization`, `HTTP-Referer`, `X-Title`
-- [ ] Reuses OpenAI message and tool conversion functions
-- [ ] Generation ID tracked from first chunk for post-stream usage fetch
-- [ ] Retry logic (3 attempts, 500ms delay) in generation details fetch
-- [ ] Provider factory handles "openrouter" provider name
-- [ ] `cargo clippy -- -D warnings` passes
-- [ ] All unit tests pass
+- [x] OpenRouter streaming works with OpenAI-compatible format
+- [x] Reasoning chunks from `delta.reasoning` emitted as `StreamChunk::Thinking`
+- [x] Fallback usage fetch via `/v1/generation?id={id}` endpoint works
+- [x] Error detection handles both `finish_reason: "error"` and top-level `error` object
+- [x] Proper headers sent: `Authorization`, `HTTP-Referer`, `X-Title`
+- [x] Reuses OpenAI message and tool conversion functions
+- [x] Generation ID tracked from first chunk for post-stream usage fetch
+- [x] Retry logic (3 attempts, 500ms delay) in generation details fetch
+- [x] Provider factory handles "openrouter" provider name
+- [x] `cargo clippy -- -D warnings` passes
+- [x] All unit tests pass
+
+**Completed**: PR #7

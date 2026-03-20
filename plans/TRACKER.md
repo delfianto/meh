@@ -22,7 +22,7 @@
 | 07 | [STEP07.md](STEP07.md) | End-to-end wiring (User → TUI) | `[x]` | PR #4 |
 | 08 | [STEP08.md](STEP08.md) | OpenAI provider | `[x]` | PR #5 |
 | 09 | [STEP09.md](STEP09.md) | Gemini provider | `[x]` | PR #6 |
-| 10 | [STEP10.md](STEP10.md) | OpenRouter provider | `[ ]` | Depends on: 05, 08 |
+| 10 | [STEP10.md](STEP10.md) | OpenRouter provider | `[x]` | PR #7 |
 
 ## Phase 3: Tool System
 
@@ -78,12 +78,12 @@
 | Phase | Total | Not Started | In Progress | Complete | Blocked |
 |-------|-------|-------------|-------------|----------|---------|
 | 1. Foundation | 4 | 0 | 0 | 4 | 0 |
-| 2. Providers | 6 | 1 | 0 | 5 | 0 |
+| 2. Providers | 6 | 0 | 0 | 6 | 0 |
 | 3. Tools | 6 | 6 | 0 | 0 | 0 |
 | 4. Advanced | 8 | 8 | 0 | 0 | 0 |
 | 5. Polish | 6 | 6 | 0 | 0 | 0 |
 | 6. Critical | 7 | 7 | 0 | 0 | 0 |
-| **Total** | **37** | **28** | **0** | **9** | **0** |
+| **Total** | **37** | **27** | **0** | **10** | **0** |
 
 ---
 
