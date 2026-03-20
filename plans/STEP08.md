@@ -884,15 +884,17 @@ mod openai_tests {
 ```
 
 ## Acceptance Criteria
-- [ ] OpenAI Chat Completions API streaming works end-to-end
-- [ ] Tool calls with index-based tracking accumulate arguments correctly
-- [ ] ToolCallComplete emitted when finish_reason is "tool_calls"
-- [ ] Reasoning effort maps correctly from thinking_budget
-- [ ] Message conversion handles all content block types (Text, ToolUse, ToolResult)
-- [ ] Thinking blocks are stripped when converting to OpenAI format
-- [ ] Usage tokens include reasoning token breakdown when available
-- [ ] Cancellation via CancellationToken stops the stream
-- [ ] Provider factory handles "openai" provider name
-- [ ] Model info lookup returns correct values for known models
-- [ ] `cargo clippy -- -D warnings` passes
-- [ ] All unit tests pass
+- [x] OpenAI Chat Completions API streaming works end-to-end
+- [x] Tool calls with index-based tracking accumulate arguments correctly
+- [x] ToolCallComplete emitted when finish_reason is "tool_calls"
+- [x] Reasoning effort maps correctly from thinking_budget
+- [x] Message conversion handles all content block types (Text, ToolUse, ToolResult)
+- [x] Thinking blocks are stripped when converting to OpenAI format
+- [x] Usage tokens include reasoning token breakdown when available
+- [x] Cancellation via CancellationToken stops the stream
+- [x] Provider factory handles "openai" provider name
+- [x] Model info lookup returns correct values for known models
+- [x] `cargo clippy -- -D warnings` passes
+- [x] All unit tests pass
+
+**Completed**: PR #5

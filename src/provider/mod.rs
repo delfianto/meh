@@ -203,6 +203,7 @@ pub fn create_provider(
         "anthropic" => Ok(Box::new(anthropic::AnthropicProvider::new(
             api_key, base_url,
         )?)),
+        "openai" => Ok(Box::new(openai::OpenAiProvider::new(api_key, base_url)?)),
         _ => anyhow::bail!("Unknown provider: {provider_name}"),
     }
 }
