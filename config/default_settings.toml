@@ -1,0 +1,12 @@
+# Meh — Default Settings
+# Copy to ~/.config/meh/config.toml and customize.
+
+[provider]
+default = "anthropic"
+
+[mode]
+default = "act"
+strict_plan = false
+
+[permissions]
+mode = "ask"
