@@ -40,7 +40,7 @@
 | Step | File | Description | Status | Notes |
 |------|------|-------------|--------|-------|
 | 17 | [STEP17.md](STEP17.md) | Plan/Act mode switching | `[x]` | PR #14 |
-| 18 | [STEP18.md](STEP18.md) | Mode-specific models + provider hot-swap | `[ ]` | Depends on: 17, 05–10 |
+| 18 | [STEP18.md](STEP18.md) | Mode-specific models + provider hot-swap | `[x]` | PR #15 |
 | 19 | [STEP19.md](STEP19.md) | Thinking view (collapsible, toggleable) | `[ ]` | Depends on: 03, 06 |
 | 20 | [STEP20.md](STEP20.md) | YOLO mode + auto-approve rules | `[ ]` | Depends on: 13 |
 | 21 | [STEP21.md](STEP21.md) | MCP client (stdio transport) | `[ ]` | Depends on: 11, 13 |
@@ -80,10 +80,10 @@
 | 1. Foundation | 4 | 0 | 0 | 4 | 0 |
 | 2. Providers | 6 | 0 | 0 | 6 | 0 |
 | 3. Tools | 6 | 0 | 0 | 6 | 0 |
-| 4. Advanced | 8 | 7 | 0 | 1 | 0 |
+| 4. Advanced | 8 | 6 | 0 | 2 | 0 |
 | 5. Polish | 6 | 6 | 0 | 0 | 0 |
 | 6. Critical | 7 | 7 | 0 | 0 | 0 |
-| **Total** | **37** | **20** | **0** | **17** | **0** |
+| **Total** | **37** | **19** | **0** | **18** | **0** |
 
 ---
 

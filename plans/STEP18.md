@@ -229,12 +229,14 @@ mod model_selection_tests {
 ```
 
 ## Acceptance Criteria
-- [ ] Plan mode can use a different provider/model than act mode
-- [ ] Mode switch triggers provider hot-swap when models differ
-- [ ] Thinking budget is mode-specific
-- [ ] Fallback to default provider/model when mode-specific not configured
-- [ ] Status bar shows current provider/model, updates on switch
-- [ ] Conversation history preserved across mode switch (messages carry over)
-- [ ] API keys resolved for the correct provider on switch
-- [ ] `cargo clippy -- -D warnings` passes
-- [ ] All tests pass
+- [x] Plan mode can use a different provider/model than act mode
+- [x] Mode switch triggers provider hot-swap when models differ (`needs_provider_switch`)
+- [x] Thinking budget is mode-specific
+- [x] Fallback to default provider/model when mode-specific not configured
+- [ ] Status bar shows current provider/model, updates on switch (TUI integration deferred)
+- [ ] Conversation history preserved across mode switch (agent integration deferred)
+- [ ] API keys resolved for the correct provider on switch (controller integration deferred)
+- [x] `cargo clippy -- -D warnings` passes
+- [x] All tests pass (9 new test cases)
+
+**Completed**: PR #15

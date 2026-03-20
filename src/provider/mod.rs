@@ -33,6 +33,7 @@ pub mod common;
 pub mod gemini;
 pub mod openai;
 pub mod openrouter;
+pub mod resolve;
 
 use async_trait::async_trait;
 use futures::Stream;
