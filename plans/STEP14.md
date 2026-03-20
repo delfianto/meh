@@ -376,14 +376,16 @@ mod fs_tests {
 ```
 
 ## Acceptance Criteria
-- [ ] write_file creates new files and overwrites existing ones
-- [ ] write_file creates parent directories as needed
-- [ ] apply_patch applies single-file unified diffs
-- [ ] apply_patch handles multi-file patches
-- [ ] apply_patch creates new files (--- /dev/null)
-- [ ] apply_patch deletes files (+++ /dev/null)
-- [ ] apply_patch reports error on context mismatch
-- [ ] Fuzzy context matching handles plus or minus 5 line offset
-- [ ] Both tools require approval (category = FileWrite)
-- [ ] `cargo clippy -- -D warnings` passes
-- [ ] All tests pass (15+ test cases)
+- [x] write_file creates new files and overwrites existing ones
+- [x] write_file creates parent directories as needed
+- [x] apply_patch applies single-file unified diffs
+- [x] apply_patch handles multi-file patches
+- [x] apply_patch creates new files (--- /dev/null)
+- [x] apply_patch deletes files (+++ /dev/null)
+- [x] apply_patch reports error on context mismatch
+- [x] Fuzzy context matching handles plus or minus 5 line offset
+- [x] Both tools require approval (category = FileWrite)
+- [x] `cargo clippy -- -D warnings` passes
+- [x] All tests pass (21 test cases)
+
+**Completed**: PR #11
