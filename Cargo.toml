@@ -52,6 +52,7 @@ dirs = "6"
 keyring = "3"
 tiktoken-rs = "0.6"
 similar = "2"
+base64 = "0.22"
 notify = { version = "7", features = ["macos_kqueue"] }
 ignore = "0.4"
 
