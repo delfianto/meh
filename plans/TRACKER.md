@@ -19,7 +19,7 @@
 |------|------|-------------|--------|-------|
 | 05 | [STEP05.md](STEP05.md) | Provider trait + Anthropic streaming | `[x]` | PR #2 |
 | 06 | [STEP06.md](STEP06.md) | StreamProcessor (text + thinking parsing) | `[x]` | PR #3 |
-| 07 | [STEP07.md](STEP07.md) | End-to-end wiring (User → TUI) | `[ ]` | Depends on: 01–06 |
+| 07 | [STEP07.md](STEP07.md) | End-to-end wiring (User → TUI) | `[x]` | PR #4 |
 | 08 | [STEP08.md](STEP08.md) | OpenAI provider | `[ ]` | Depends on: 05 |
 | 09 | [STEP09.md](STEP09.md) | Gemini provider | `[ ]` | Depends on: 05 |
 | 10 | [STEP10.md](STEP10.md) | OpenRouter provider | `[ ]` | Depends on: 05, 08 |
@@ -78,12 +78,12 @@
 | Phase | Total | Not Started | In Progress | Complete | Blocked |
 |-------|-------|-------------|-------------|----------|---------|
 | 1. Foundation | 4 | 0 | 0 | 4 | 0 |
-| 2. Providers | 6 | 4 | 0 | 2 | 0 |
+| 2. Providers | 6 | 3 | 0 | 3 | 0 |
 | 3. Tools | 6 | 6 | 0 | 0 | 0 |
 | 4. Advanced | 8 | 8 | 0 | 0 | 0 |
 | 5. Polish | 6 | 6 | 0 | 0 | 0 |
 | 6. Critical | 7 | 7 | 0 | 0 | 0 |
-| **Total** | **37** | **31** | **0** | **6** | **0** |
+| **Total** | **37** | **30** | **0** | **7** | **0** |
 
 ---
 

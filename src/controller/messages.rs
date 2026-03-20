@@ -1,5 +1,6 @@
 //! All messages exchanged between components via channels.
 
+use crate::provider::StreamChunk;
 use crate::state::task_state::Mode;
 use std::path::PathBuf;
 
@@ -23,8 +24,8 @@ pub enum ControllerMessage {
     /// User requested quit.
     Quit,
 
-    /// Streaming chunk from LLM provider.
-    StreamChunk(StreamChunkWrapper),
+    /// Streaming chunk from the agent (forwarded from provider).
+    StreamChunk(StreamChunk),
     /// Agent requests a tool to be executed (needs approval check).
     ToolCallRequest(ToolCallRequest),
     /// Tool execution completed.
@@ -33,19 +34,6 @@ pub enum ControllerMessage {
     TaskComplete(TaskResult),
     /// Agent encountered an error.
     TaskError(String),
-}
-
-/// Wrapper for stream chunks that can be sent through channels.
-/// This is a newtype around the provider's `StreamChunk` to keep
-/// the controller message type clean.
-#[derive(Debug, Clone)]
-pub struct StreamChunkWrapper {
-    pub chunk_type: String,
-    pub content: String,
-    pub tool_id: Option<String>,
-    pub tool_name: Option<String>,
-    pub usage_input: Option<u64>,
-    pub usage_output: Option<u64>,
 }
 
 /// A tool call that needs approval and execution.
