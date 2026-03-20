@@ -778,16 +778,18 @@ mod message_tests {
 ```
 
 ## Acceptance Criteria
-- [ ] Controller runs as a separate tokio task
-- [ ] TUI and Controller communicate via unbounded MPSC channels
-- [ ] User input flows: TUI -> `ControllerMessage::UserSubmit` -> Controller -> `UiUpdate::AppendMessage` -> TUI
-- [ ] Echo response appears in chat view (confirms full round-trip)
-- [ ] Mode switch sends `StatusUpdate` to TUI
-- [ ] Task completion sends both message and status update
-- [ ] Task error displays error message in chat
-- [ ] Ctrl+C sends `Quit` message and app exits cleanly
-- [ ] Terminal is always restored on exit (even on panic via `Drop`)
-- [ ] Controller exits cleanly when all senders are dropped
-- [ ] No deadlocks or channel starvation under rapid message sending
-- [ ] `cargo clippy -- -D warnings` passes
-- [ ] `cargo test` passes all controller message routing tests
+- [x] Controller runs as a separate tokio task
+- [x] TUI and Controller communicate via unbounded MPSC channels
+- [x] User input flows: TUI -> `ControllerMessage::UserSubmit` -> Controller -> `UiUpdate::AppendMessage` -> TUI
+- [x] Echo response appears in chat view (confirms full round-trip)
+- [x] Mode switch sends `StatusUpdate` to TUI
+- [x] Task completion sends both message and status update
+- [x] Task error displays error message in chat
+- [x] Ctrl+C sends `Quit` message and app exits cleanly
+- [x] Terminal is always restored on exit (even on panic via `Drop`)
+- [x] Controller exits cleanly when all senders are dropped
+- [x] No deadlocks or channel starvation under rapid message sending
+- [x] `cargo clippy -- -D warnings` passes
+- [x] `cargo test` passes all controller message routing tests
+
+**Completed**: PR #5

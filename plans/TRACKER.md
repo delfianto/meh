@@ -11,7 +11,7 @@
 | 01 | [STEP01.md](STEP01.md) | Project scaffolding, Cargo.toml, module stubs | `[x]` | PR #2 |
 | 02 | [STEP02.md](STEP02.md) | State management (config, persistence, secrets) | `[x]` | PR #3 |
 | 03 | [STEP03.md](STEP03.md) | Basic TUI (layout, input, chat view) | `[x]` | PR #4 |
-| 04 | [STEP04.md](STEP04.md) | Controller message loop | `[ ]` | Depends on: 01–03 |
+| 04 | [STEP04.md](STEP04.md) | Controller message loop | `[x]` | PR #5 |
 
 ## Phase 2: Provider Integration
 
@@ -77,13 +77,13 @@
 
 | Phase | Total | Not Started | In Progress | Complete | Blocked |
 |-------|-------|-------------|-------------|----------|---------|
-| 1. Foundation | 4 | 1 | 0 | 3 | 0 |
+| 1. Foundation | 4 | 0 | 0 | 4 | 0 |
 | 2. Providers | 6 | 6 | 0 | 0 | 0 |
 | 3. Tools | 6 | 6 | 0 | 0 | 0 |
 | 4. Advanced | 8 | 8 | 0 | 0 | 0 |
 | 5. Polish | 6 | 6 | 0 | 0 | 0 |
 | 6. Critical | 7 | 7 | 0 | 0 | 0 |
-| **Total** | **37** | **34** | **0** | **3** | **0** |
+| **Total** | **37** | **33** | **0** | **4** | **0** |
 
 ---
 

@@ -20,18 +20,15 @@ impl InputWidget<'_> {
     /// Returns `None` for all other keys (they are forwarded to the textarea).
     pub fn handle_key(&mut self, key: KeyEvent) -> Option<String> {
         match (key.code, key.modifiers) {
-            // Enter without Shift → submit the current text
             (KeyCode::Enter, m) if !m.contains(KeyModifiers::SHIFT) => {
                 let text = self.textarea.lines().join("\n").trim().to_string();
                 if text.is_empty() {
                     return None;
                 }
-                // Clear the textarea
                 self.textarea.select_all();
                 self.textarea.cut();
                 Some(text)
             }
-            // All other keys → forward to textarea for normal editing
             _ => {
                 self.textarea.input(CrosstermEvent::Key(key));
                 None

@@ -38,9 +38,7 @@ mod tests {
 
     #[test]
     fn poll_event_tick_on_no_input() {
-        // With a very short timeout, we should get a Tick (no input available)
         let result = poll_event(Duration::from_millis(1));
-        // In test environment, poll may return None or Tick depending on terminal state
         if let Some(event) = result {
             assert!(matches!(event, TuiEvent::Tick));
         }

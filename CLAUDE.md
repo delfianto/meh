@@ -115,7 +115,9 @@ Context window management, .mehignore, environment detection, user rules, slash 
 - **Naming**: `snake_case` files/functions, `PascalCase` types, `SCREAMING_SNAKE` constants.
 - **Tests**: Unit tests in same file (`#[cfg(test)]`), integration tests in `tests/`. Every public function tested. Error paths tested.
 - **Logging**: `tracing` crate. `error` > `warn` > `info` > `debug` > `trace`.
-- **Docs**: `///` on all public items. No docs on private internals unless non-obvious.
+- **Documentation**: `///` rustdoc on ALL functions (public and private). This is the ONLY form of documentation allowed in source code.
+- **No inline comments**: Do not write numbered comments, step comments, TODO comments, or explanatory inline comments. If logic needs explanation, express it through rustdoc on the enclosing function or through clear naming. The code should be self-documenting.
+- **Module docs in `mod.rs`**: Each `mod.rs` is the architectural home for its subsystem. Use `//!` doc comments to describe the module's purpose, responsibilities, data flows, and internal structure — including ASCII diagrams where they clarify relationships. `mod.rs` should never be a bare list of `pub mod` re-exports.
 - **No panics**: Every `unwrap()`/`expect()` in non-test code is a bug.
 
 ---

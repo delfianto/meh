@@ -27,7 +27,6 @@ pub fn render_app(
     super::status_bar::render_status_bar(frame, chunks[0], status);
     super::chat_view::render_chat_view(frame, chunks[1], chat_state);
 
-    // Render input with a border
     let input_block = Block::default()
         .borders(Borders::ALL)
         .border_style(Style::default().fg(Color::DarkGray))

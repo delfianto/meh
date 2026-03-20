@@ -61,12 +61,9 @@ pub fn render_status_bar(frame: &mut Frame, area: Rect, state: &StatusBarState) 
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-
     #[test]
     #[allow(clippy::cast_precision_loss)]
     fn tokens_display_format() {
-        // Test the formatting logic directly
         let format_tokens = |total: u64| -> String {
             if total >= 1_000_000 {
                 format!("{:.1}M", total as f64 / 1_000_000.0)
