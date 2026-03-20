@@ -272,12 +272,14 @@ mod executor_tests {
 ```
 
 ## Acceptance Criteria
-- [ ] Ask mode: ReadOnly+Informational auto-approved, FileWrite/Command/Mcp need approval
-- [ ] Auto mode: respects AutoApproveRules per category
-- [ ] Yolo mode: everything approved
-- [ ] always_allow persists for session (tool-level and category-level)
-- [ ] TUI renders approval prompt with y/n/a keybindings
-- [ ] Approval flow: request → TUI prompt → response → execute/deny
-- [ ] ToolExecutor routes to correct handler
-- [ ] `cargo clippy -- -D warnings` passes
-- [ ] All tests pass (12+ test cases)
+- [x] Ask mode: ReadOnly+Informational auto-approved, FileWrite/Command/Mcp need approval
+- [x] Auto mode: respects AutoApproveRules per category
+- [x] Yolo mode: everything approved
+- [x] always_allow persists for session (tool-level and category-level)
+- [ ] TUI renders approval prompt with y/n/a keybindings (deferred to TUI integration step)
+- [ ] Approval flow: request → TUI prompt → response → execute/deny (deferred to TUI integration step)
+- [x] ToolExecutor routes to correct handler
+- [x] `cargo clippy -- -D warnings` passes
+- [x] All tests pass (26 test cases)
+
+**Completed**: PR #10
