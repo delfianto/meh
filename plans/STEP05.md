@@ -1356,21 +1356,23 @@ mod integration_tests {
 ```
 
 ## Acceptance Criteria
-- [ ] `Provider` trait defined with `create_message`, `model_info`, `abort`
-- [ ] `StreamChunk` enum covers: Text, Thinking, ToolCallDelta, ToolCallComplete, Usage, Done, Error
-- [ ] `UsageInfo` tracks input/output tokens and cache stats
-- [ ] `ModelInfo` stores model capabilities and pricing
-- [ ] `AnthropicProvider` connects to API and streams SSE responses
-- [ ] SSE events correctly parsed: message_start, content_block_start/delta/stop, message_delta, message_stop
-- [ ] Thinking chunks (thinking_delta, signature_delta) correctly emitted
-- [ ] Tool call chunks incrementally emitted via ToolCallDelta, then ToolCallComplete on content_block_stop
-- [ ] Usage tokens tracked across message_start and message_delta events
-- [ ] Cancellation works via `CancellationToken` (abort closes the SSE stream)
-- [ ] Temperature is automatically omitted when thinking is enabled
-- [ ] System prompt uses ephemeral cache control for prompt caching
-- [ ] `ProviderError` correctly identifies retriable errors (429, 5xx)
-- [ ] Retry logic with exponential backoff for retriable errors
-- [ ] Factory function `create_provider` creates the correct provider
-- [ ] `cargo clippy -- -D warnings` passes
-- [ ] `cargo test` passes all unit tests
-- [ ] `cargo test -- --ignored` passes integration tests (with API key)
+- [x] `Provider` trait defined with `create_message`, `model_info`, `abort`
+- [x] `StreamChunk` enum covers: Text, Thinking, ToolCallDelta, ToolCallComplete, Usage, Done, Error
+- [x] `UsageInfo` tracks input/output tokens and cache stats
+- [x] `ModelInfo` stores model capabilities and pricing
+- [x] `AnthropicProvider` connects to API and streams SSE responses
+- [x] SSE events correctly parsed: message_start, content_block_start/delta/stop, message_delta, message_stop
+- [x] Thinking chunks (thinking_delta, signature_delta) correctly emitted
+- [x] Tool call chunks incrementally emitted via ToolCallDelta, then ToolCallComplete on content_block_stop
+- [x] Usage tokens tracked across message_start and message_delta events
+- [x] Cancellation works via `CancellationToken` (abort closes the SSE stream)
+- [x] Temperature is automatically omitted when thinking is enabled
+- [x] System prompt uses ephemeral cache control for prompt caching
+- [x] `ProviderError` correctly identifies retriable errors (429, 5xx)
+- [x] Retry logic with exponential backoff for retriable errors
+- [x] Factory function `create_provider` creates the correct provider
+- [x] `cargo clippy -- -D warnings` passes
+- [x] `cargo test` passes all unit tests
+- [x] `cargo test -- --ignored` passes integration tests (with API key)
+
+**Completed**: PR #2
