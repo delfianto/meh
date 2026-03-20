@@ -75,5 +75,6 @@ unsafe_code = "forbid"
 all = "warn"
 pedantic = "warn"
 nursery = "warn"
+unnecessary_literal_bound = { level = "allow", priority = 10 }
 unwrap_used = "warn"
 expect_used = "warn"
