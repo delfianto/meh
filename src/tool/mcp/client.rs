@@ -29,6 +29,14 @@ impl McpClient {
                 &config.args,
                 &config.env,
             )?),
+            "sse" => Box::new(super::transport::SseTransport::new(
+                &config.command,
+                &config.headers,
+            )?),
+            "http" | "streamable-http" => Box::new(super::transport::HttpTransport::new(
+                &config.command,
+                &config.headers,
+            )?),
             other => anyhow::bail!("Unsupported MCP transport: {other}"),
         };
 

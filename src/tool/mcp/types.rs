@@ -90,7 +90,7 @@ pub enum McpContent {
 /// Configuration for a single MCP server.
 #[derive(Debug, Clone, Deserialize)]
 pub struct McpServerConfig {
-    /// Command to spawn the server process.
+    /// Command to spawn the server process (or URL for remote transports).
     pub command: String,
     /// Arguments to pass to the command.
     #[serde(default)]
@@ -98,12 +98,28 @@ pub struct McpServerConfig {
     /// Environment variables to set for the process.
     #[serde(default)]
     pub env: HashMap<String, String>,
-    /// Transport type ("stdio", "sse").
+    /// Transport type ("stdio", "sse", "http", "streamable-http").
     #[serde(default = "default_transport")]
     pub transport: String,
     /// Tool name patterns that are auto-approved for this server.
     #[serde(default)]
     pub auto_approve: Vec<String>,
+    /// Authentication headers for remote transports (SSE, HTTP).
+    #[serde(default)]
+    pub headers: HashMap<String, String>,
+}
+
+impl Default for McpServerConfig {
+    fn default() -> Self {
+        Self {
+            command: String::new(),
+            args: Vec::new(),
+            env: HashMap::new(),
+            transport: default_transport(),
+            auto_approve: Vec::new(),
+            headers: HashMap::new(),
+        }
+    }
 }
 
 /// Default transport type.
@@ -235,5 +251,28 @@ mod tests {
         assert!(config.args.is_empty());
         assert!(config.env.is_empty());
         assert!(config.auto_approve.is_empty());
+        assert!(config.headers.is_empty());
+    }
+
+    #[test]
+    fn test_headers_config_parsing() {
+        let json = r#"{
+            "command": "https://api.example.com/mcp",
+            "transport": "http",
+            "headers": {
+                "Authorization": "Bearer token123",
+                "X-Custom": "value"
+            }
+        }"#;
+        let config: McpServerConfig = serde_json::from_str(json).unwrap();
+        assert_eq!(config.headers.len(), 2);
+        assert_eq!(config.headers["Authorization"], "Bearer token123");
+    }
+
+    #[test]
+    fn test_no_headers_defaults_empty() {
+        let json = r#"{"command": "node", "transport": "stdio"}"#;
+        let config: McpServerConfig = serde_json::from_str(json).unwrap();
+        assert!(config.headers.is_empty());
     }
 }

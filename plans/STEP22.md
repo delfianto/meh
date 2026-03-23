@@ -596,14 +596,14 @@ mod auth_tests {
 ```
 
 ## Acceptance Criteria
-- [ ] SSE transport connects to SSE endpoint and POST message endpoint
-- [ ] SSE responses correctly routed to pending requests by ID
-- [ ] HTTP transport sends/receives JSON-RPC over single endpoint
-- [ ] Session ID tracked in HTTP transport via Mcp-Session-Id header
-- [ ] Transport selection based on config.transport field
-- [ ] Authentication headers configurable per server
-- [ ] Environment variable expansion in header values
-- [ ] Retry with exponential backoff for transient failures
-- [ ] Timeout handling for SSE and HTTP requests (30s default)
-- [ ] `cargo clippy -- -D warnings` passes
-- [ ] All tests pass
+- [x] SSE transport connects to SSE endpoint and POST message endpoint
+- [x] SSE responses correctly routed to pending requests by ID
+- [x] HTTP transport sends/receives JSON-RPC over single endpoint
+- [x] Session ID tracked in HTTP transport via Mcp-Session-Id header
+- [x] Transport selection based on config.transport field
+- [x] Authentication headers configurable per server
+- [x] Environment variable expansion in header values
+- [x] Retry with exponential backoff for transient failures
+- [x] Timeout handling for SSE and HTTP requests (30s default)
+- [x] `cargo clippy -- -D warnings` passes
+- [x] All tests pass
