@@ -12,7 +12,7 @@ This is not a product. This is a science experiment wearing a trench coat preten
 
 ```
 ┌─────────────────────────────────────────────────┐
-│ [ACT] anthropic/claude-sonnet-4 · 45.2k · $0.00│
+│ [ACT] anthropic/claude-sonnet-4 · 45.2k · $0.00 │
 ├─────────────────────────────────────────────────┤
 │                                                 │
 │  You: Fix the authentication bug                │
@@ -145,7 +145,7 @@ The architecture is actually pretty reasonable (the AI read a lot of Claude Code
 ┌─────────────────────────────────────────────────┐
 │                  meh (binary)                   │
 ├─────────────────────────────────────────────────┤
-│  TUI (Ratatui)  ◄──►  Controller  ◄──►  State  │
+│  TUI (Ratatui)  ◄──►  Controller  ◄──►  State   │
 │       ▲                     │                   │
 │       │               ┌─────┴─────┐             │
 │  EventStream          ▼           ▼             │
