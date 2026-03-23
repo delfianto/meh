@@ -70,6 +70,32 @@ impl TaskAgent {
         });
     }
 
+    /// Creates a task agent with pre-loaded conversation history (for resume).
+    #[allow(clippy::too_many_arguments)]
+    pub fn with_history(
+        task_id: String,
+        messages: Vec<Message>,
+        provider: Box<dyn Provider>,
+        system_prompt: String,
+        config: ModelConfig,
+        tools: Vec<ToolDefinition>,
+        ctrl_tx: mpsc::UnboundedSender<ControllerMessage>,
+        rx: mpsc::UnboundedReceiver<AgentMessage>,
+    ) -> Self {
+        Self {
+            task_id,
+            provider,
+            system_prompt,
+            messages,
+            config,
+            tools,
+            ctrl_tx,
+            rx,
+            stream_processor: StreamProcessor::new(),
+            cancelled: false,
+        }
+    }
+
     /// Alias for [`add_user_message`](Self::add_user_message) used by sub-agents.
     pub fn add_initial_message(&mut self, text: String) {
         self.add_user_message(text);
@@ -568,5 +594,65 @@ mod tests {
             }
         }
         assert!(!text_chunks.is_empty());
+    }
+
+    #[tokio::test]
+    async fn agent_with_history_resumes() {
+        let (ctrl_tx, mut ctrl_rx) = mpsc::unbounded_channel();
+        let (_agent_tx, agent_rx) = mpsc::unbounded_channel();
+
+        let existing_messages = vec![
+            Message {
+                role: MessageRole::User,
+                content: vec![ContentBlock::Text("original question".to_string())],
+            },
+            Message {
+                role: MessageRole::Assistant,
+                content: vec![ContentBlock::Text("original answer".to_string())],
+            },
+            Message {
+                role: MessageRole::User,
+                content: vec![ContentBlock::Text("follow up".to_string())],
+            },
+        ];
+
+        let agent = TaskAgent::with_history(
+            "resumed-task".to_string(),
+            existing_messages,
+            Box::new(MockProvider::new(vec![
+                StreamChunk::Text {
+                    delta: "Follow up answer".to_string(),
+                },
+                StreamChunk::Done,
+            ])),
+            "test prompt".to_string(),
+            ModelConfig {
+                model_id: "test".to_string(),
+                max_tokens: 100,
+                temperature: None,
+                thinking_budget: None,
+            },
+            vec![],
+            ctrl_tx,
+            agent_rx,
+        );
+
+        tokio::spawn(agent.run());
+
+        let mut got_complete = false;
+        while let Some(msg) = ctrl_rx.recv().await {
+            if let ControllerMessage::TaskComplete(result) = msg {
+                assert_eq!(result.task_id, "resumed-task");
+                assert!(
+                    result
+                        .completion_message
+                        .as_deref()
+                        .is_some_and(|m| m.contains("Follow up answer"))
+                );
+                got_complete = true;
+                break;
+            }
+        }
+        assert!(got_complete);
     }
 }

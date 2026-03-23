@@ -29,6 +29,7 @@
 pub mod app_layout;
 pub mod chat_view;
 pub mod event;
+pub mod history_view;
 pub mod input;
 pub mod settings_view;
 pub mod status_bar;

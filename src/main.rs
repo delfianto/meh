@@ -49,6 +49,10 @@ pub struct Cli {
     #[arg(long)]
     pub resume: Option<String>,
 
+    /// List recent tasks and exit.
+    #[arg(long)]
+    pub history: bool,
+
     /// Verbose logging.
     #[arg(short, long)]
     pub verbose: bool,
@@ -69,6 +73,27 @@ fn main() -> anyhow::Result<()> {
     let runtime = tokio::runtime::Builder::new_multi_thread()
         .enable_all()
         .build()?;
+
+    if cli.history {
+        let history_dir = state::history::TaskHistory::default_dir()?;
+        let history = state::history::TaskHistory::new(history_dir)?;
+        let tasks = history.list_tasks()?;
+        if tasks.is_empty() {
+            println!("No saved tasks.");
+        } else {
+            for task in tasks.iter().take(20) {
+                println!(
+                    "{} | {} | {} | {} msgs | ${:.4}",
+                    task.task_id,
+                    task.updated_at.format("%Y-%m-%d %H:%M"),
+                    task.title,
+                    task.message_count,
+                    task.total_cost,
+                );
+            }
+        }
+        return Ok(());
+    }
 
     runtime.block_on(async {
         let app = app::App::new(cli).await?;
@@ -135,5 +160,17 @@ mod tests {
             cli.config.as_deref(),
             Some(std::path::Path::new("/tmp/config.toml"))
         );
+    }
+
+    #[test]
+    fn cli_history_flag() {
+        let cli = Cli::try_parse_from(["meh", "--history"]).unwrap();
+        assert!(cli.history);
+    }
+
+    #[test]
+    fn cli_history_default_false() {
+        let cli = Cli::try_parse_from(["meh"]).unwrap();
+        assert!(!cli.history);
     }
 }
