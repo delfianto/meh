@@ -474,13 +474,13 @@ mod delegate_tool_tests {
 ```
 
 ## Acceptance Criteria
-- [ ] Sub-agents can be spawned from parent agent via delegate_task tool
-- [ ] Sub-agents have isolated conversation context
-- [ ] Sub-agents share permission state with parent
-- [ ] Sub-agent completion message returned as tool result
-- [ ] Max 3 concurrent sub-agents enforced
-- [ ] Sub-agent errors don't crash parent (returned as error tool result)
-- [ ] Sub-agent activity visible in TUI with visual nesting
-- [ ] Provider factory creates independent instances for sub-agents
-- [ ] `cargo clippy -- -D warnings` passes
-- [ ] All tests pass
+- [x] Sub-agents can be spawned from parent agent via delegate_task tool
+- [x] Sub-agents have isolated conversation context
+- [x] Sub-agents share permission state with parent
+- [x] Sub-agent completion message returned as tool result
+- [x] Max 3 concurrent sub-agents enforced
+- [x] Sub-agent errors don't crash parent (returned as error tool result)
+- [x] Sub-agent activity visible in TUI with visual nesting
+- [x] Provider factory creates independent instances for sub-agents
+- [x] `cargo clippy -- -D warnings` passes
+- [x] All tests pass

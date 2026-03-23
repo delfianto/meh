@@ -70,6 +70,11 @@ impl TaskAgent {
         });
     }
 
+    /// Alias for [`add_user_message`](Self::add_user_message) used by sub-agents.
+    pub fn add_initial_message(&mut self, text: String) {
+        self.add_user_message(text);
+    }
+
     /// Main execution loop. Returns when the task completes or is cancelled.
     #[allow(clippy::too_many_lines)]
     pub async fn run(mut self) -> anyhow::Result<()> {

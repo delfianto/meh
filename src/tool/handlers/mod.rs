@@ -21,6 +21,7 @@
 pub mod apply_patch;
 pub mod ask_followup;
 pub mod attempt_completion;
+pub mod delegate_task;
 pub mod execute_command;
 pub mod list_files;
 pub mod mcp_tool;

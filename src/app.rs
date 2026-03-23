@@ -134,7 +134,7 @@ fn apply_ui_update(
                 status.is_yolo = y;
             }
         }
-        UiUpdate::ToolApproval { .. } => {}
+        UiUpdate::ToolApproval { .. } | UiUpdate::SubAgentUpdate { .. } => {}
         UiUpdate::Quit => return true,
     }
     false

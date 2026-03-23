@@ -93,6 +93,12 @@ pub enum UiUpdate {
     },
     /// Show thinking/reasoning content.
     ThinkingContent { delta: String },
+    /// Update from a sub-agent.
+    SubAgentUpdate {
+        parent_task_id: String,
+        sub_task_id: String,
+        content: String,
+    },
     /// Signal that the app should quit.
     Quit,
 }

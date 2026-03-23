@@ -45,7 +45,7 @@
 | 20 | [STEP20.md](STEP20.md) | YOLO mode + auto-approve rules | `[x]` | PR #17 |
 | 21 | [STEP21.md](STEP21.md) | MCP client (stdio transport) | `[x]` | PR #18 |
 | 22 | [STEP22.md](STEP22.md) | MCP SSE + HTTP transports | `[x]` | PR #19 |
-| 23 | [STEP23.md](STEP23.md) | Sub-agent support | `[ ]` | Depends on: 07 |
+| 23 | [STEP23.md](STEP23.md) | Sub-agent support | `[x]` | PR #20 |
 | 24 | [STEP24.md](STEP24.md) | Task history (save/resume) | `[ ]` | Depends on: 02, 07 |
 
 ## Phase 5: Polish
@@ -80,10 +80,10 @@
 | 1. Foundation | 4 | 0 | 0 | 4 | 0 |
 | 2. Providers | 6 | 0 | 0 | 6 | 0 |
 | 3. Tools | 6 | 0 | 0 | 6 | 0 |
-| 4. Advanced | 8 | 2 | 0 | 6 | 0 |
+| 4. Advanced | 8 | 1 | 0 | 7 | 0 |
 | 5. Polish | 6 | 6 | 0 | 0 | 0 |
 | 6. Critical | 7 | 7 | 0 | 0 | 0 |
-| **Total** | **37** | **15** | **0** | **22** | **0** |
+| **Total** | **37** | **14** | **0** | **23** | **0** |
 
 ---
 
