@@ -74,8 +74,15 @@ impl App {
         }
 
         let default_provider = config.provider.default.clone();
-        let tui_result =
-            run_tui_async(&ctrl_tx, ui_rx, &default_provider, initial_prompt, yolo).await;
+        let tui_result = run_tui_async(
+            &ctrl_tx,
+            ui_rx,
+            &default_provider,
+            initial_prompt,
+            yolo,
+            config,
+        )
+        .await;
 
         controller_handle.abort();
         tui_result
@@ -204,6 +211,7 @@ async fn run_tui_async(
     default_provider: &str,
     initial_prompt: Option<String>,
     yolo: bool,
+    app_config: crate::state::config::AppConfig,
 ) -> anyhow::Result<()> {
     let mut tui = tui::Tui::new()?;
     let mut chat_state = ChatViewState::new();
@@ -247,7 +255,7 @@ async fn run_tui_async(
     let mut render_tick = tokio::time::interval(Duration::from_millis(16));
     let mut dirty = true;
     let mut settings_view: Option<SettingsView> = None;
-    let current_config = crate::state::config::AppConfig::default();
+    let current_config = app_config;
 
     loop {
         tokio::select! {
@@ -340,8 +348,8 @@ async fn run_tui_async(
                                 Constraint::Percentage(40),
                                 Constraint::Percentage(60),
                             ]).split(frame.area());
-                            tui::app_layout::render_app(
-                                frame, &chat_state, &input, &status,
+                            tui::app_layout::render_app_in(
+                                frame, chunks[0], &chat_state, &input, &status,
                             );
                             crate::tui::settings_view::render_settings(
                                 frame, chunks[1], sv,
