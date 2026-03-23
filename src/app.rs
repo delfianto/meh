@@ -37,6 +37,11 @@ impl App {
         tracing::info!("meh starting up");
 
         let config = self.state.config().await;
+
+        for err in crate::error::validate_config(&config) {
+            tracing::warn!("{err}");
+        }
+
         let yolo = is_yolo_mode(&config.permissions, self.cli.yolo);
         let permission_mode = if yolo {
             PermissionMode::Yolo
@@ -54,7 +59,18 @@ impl App {
 
         let controller_handle = tokio::spawn(controller.run());
 
-        let initial_prompt = self.cli.prompt.clone();
+        let mut initial_prompt = self.cli.prompt.clone();
+
+        if let Some(ref task_id) = self.cli.resume {
+            match load_resume_context(task_id) {
+                Ok(context) => initial_prompt = Some(context),
+                Err(e) => {
+                    tracing::error!(task_id, error = %e, "Failed to resume task");
+                    anyhow::bail!("Failed to resume task '{task_id}': {e}");
+                }
+            }
+        }
+
         let default_provider = config.provider.default.clone();
         let tui_result = tokio::task::spawn_blocking(move || {
             run_tui(&ctrl_tx, ui_rx, &default_provider, initial_prompt, yolo)
@@ -64,6 +80,30 @@ impl App {
         controller_handle.abort();
         tui_result
     }
+}
+
+/// Load resume context from task history.
+fn load_resume_context(task_id: &str) -> anyhow::Result<String> {
+    let history_dir = crate::state::history::TaskHistory::default_dir()?;
+    let history = crate::state::history::TaskHistory::new(history_dir)?;
+    let task = history.load_task(task_id)?;
+
+    let last_user_text = task
+        .messages
+        .iter()
+        .rev()
+        .find(|m| m.role == "user")
+        .and_then(|m| m.content.first())
+        .and_then(|c| match c {
+            crate::state::history::PersistedContent::Text { text } => Some(text.clone()),
+            _ => None,
+        })
+        .unwrap_or_default();
+
+    Ok(format!(
+        "[Resuming task: {}]\n{}",
+        task.title, last_user_text
+    ))
 }
 
 /// Tracks whether we're currently in a streaming assistant message.
