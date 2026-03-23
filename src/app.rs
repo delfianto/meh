@@ -259,7 +259,13 @@ fn run_tui(
             dirty = false;
         }
 
-        if let Some(event) = poll_event(Duration::from_millis(16)) {
+        let poll_timeout = if status.is_streaming {
+            Duration::from_millis(16)
+        } else {
+            Duration::from_millis(100)
+        };
+
+        if let Some(event) = poll_event(poll_timeout) {
             match event {
                 TuiEvent::Key(key) => {
                     dirty = true;

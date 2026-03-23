@@ -23,7 +23,10 @@ use crate::provider::{self, ModelConfig, StreamChunk};
 use crate::state::StateManager;
 use crate::state::history::{AutoSaver, PersistedTask, TaskHistory};
 use crate::streaming::ui_batcher::UiBatcher;
+use crate::tool::executor::ToolExecutor;
+use crate::tool::{ToolContext, ToolRegistry};
 use messages::{ControllerMessage, ToolCallResult, UiUpdate};
+use std::sync::Arc;
 use std::time::Duration;
 use task::TaskCancellation;
 use tokio::sync::mpsc;
@@ -56,6 +59,8 @@ pub struct Controller {
     ignore: IgnoreController,
     /// Debounced auto-saver for task persistence.
     auto_saver: Option<AutoSaver>,
+    /// Executes tool calls via the tool registry.
+    tool_executor: Arc<ToolExecutor>,
 }
 
 impl Controller {
@@ -76,6 +81,7 @@ impl Controller {
             .ok()
             .and_then(|dir| TaskHistory::new(dir).ok())
             .map(AutoSaver::new);
+        let tool_executor = Arc::new(ToolExecutor::new(Arc::new(ToolRegistry::with_defaults())));
 
         let ctrl = Self {
             rx,
@@ -89,6 +95,7 @@ impl Controller {
             cancellation: TaskCancellation::new(),
             ignore,
             auto_saver,
+            tool_executor,
         };
         (ctrl, ctrl_tx, ui_rx)
     }
@@ -525,19 +532,31 @@ impl Controller {
         }
     }
 
-    /// Handles a tool call request — auto-executes for now (permission system in STEP 13).
+    /// Handles a tool call request by dispatching to the tool executor.
     fn handle_tool_call_request(&self, req: messages::ToolCallRequest) {
-        tracing::info!(
-            tool = req.tool_name,
-            "Tool call requested (auto-responding)"
-        );
-        if let Some(tx) = &self.agent_tx {
-            let _ = tx.send(AgentMessage::ToolCallResult(ToolCallResult {
-                tool_use_id: req.tool_use_id,
-                content: format!("Tool '{}' not yet implemented", req.tool_name),
-                is_error: true,
-            }));
-        }
+        tracing::info!(tool = req.tool_name, "Executing tool call");
+        let executor = self.tool_executor.clone();
+        let agent_tx = self.agent_tx.clone();
+        let ctx = ToolContext {
+            cwd: std::env::current_dir()
+                .map_or_else(|_| ".".to_string(), |p| p.to_string_lossy().to_string()),
+            auto_approved: false,
+        };
+
+        tokio::spawn(async move {
+            let response = executor.execute(&req.tool_name, req.arguments, &ctx).await;
+            if let Some(tx) = agent_tx {
+                let (content, is_error) = match response {
+                    Ok(r) => (r.content, r.is_error),
+                    Err(e) => (format!("Tool error: {e}"), true),
+                };
+                let _ = tx.send(AgentMessage::ToolCallResult(ToolCallResult {
+                    tool_use_id: req.tool_use_id,
+                    content,
+                    is_error,
+                }));
+            }
+        });
     }
 }
 

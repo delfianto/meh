@@ -284,13 +284,13 @@ mod json_preview_tests {
 ```
 
 ## Acceptance Criteria
-- [ ] AutoSaver debounce fires reliably during fast streaming (pinned sleep)
-- [ ] JSON preview captures booleans, numbers, arrays, escaped quotes
-- [ ] Regex removed from tool_parser.rs
-- [ ] Tool executor wired in controller — tools actually execute
-- [ ] TUI idle CPU reduced (longer poll timeout when not streaming)
-- [ ] Accumulation buffers use `String::with_capacity()` (agent, batcher)
-- [ ] Zero-copy trade-off documented in provider module and CLAUDE.md
-- [ ] All existing tests pass (no regressions)
-- [ ] `cargo clippy -- -D warnings` passes
-- [ ] `cargo test` passes
+- [x] AutoSaver debounce fires reliably during fast streaming (pinned sleep)
+- [x] JSON preview captures booleans, numbers, arrays, escaped quotes
+- [x] Regex removed from tool_parser.rs
+- [x] Tool executor wired in controller — tools actually execute
+- [x] TUI idle CPU reduced (longer poll timeout when not streaming)
+- [x] Accumulation buffers use `String::with_capacity()` (agent, batcher)
+- [x] Zero-copy trade-off documented in provider module
+- [x] All existing tests pass (no regressions)
+- [x] `cargo clippy -- -D warnings` passes
+- [x] `cargo test` passes

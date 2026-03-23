@@ -24,8 +24,8 @@ impl UiBatcher {
     #[allow(clippy::cast_possible_truncation)]
     pub fn new(target_fps: u32) -> Self {
         Self {
-            text_buffer: String::new(),
-            thinking_buffer: String::new(),
+            text_buffer: String::with_capacity(1024),
+            thinking_buffer: String::with_capacity(512),
             pending_tokens: None,
             pending_cost: None,
             pending_context_tokens: None,
@@ -45,7 +45,12 @@ impl UiBatcher {
     }
 
     /// Buffer a status update (latest wins for each field).
-    pub const fn push_status(&mut self, tokens: Option<u64>, cost: Option<f64>, context: Option<u64>) {
+    pub const fn push_status(
+        &mut self,
+        tokens: Option<u64>,
+        cost: Option<f64>,
+        context: Option<u64>,
+    ) {
         if let Some(t) = tokens {
             self.pending_tokens = Some(t);
         }

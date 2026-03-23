@@ -307,27 +307,39 @@ pub struct AutoSaver {
 
 impl AutoSaver {
     /// Spawn the auto-saver background task.
+    ///
+    /// Uses a pinned `Sleep` future that is reset (not recreated) when new
+    /// data arrives. This avoids the starvation bug where a recreated sleep
+    /// inside `select!` never fires during fast streaming.
     pub fn new(history: TaskHistory) -> Self {
         let (tx, mut rx) = mpsc::unbounded_channel::<PersistedTask>();
 
         tokio::spawn(async move {
             let mut pending: Option<PersistedTask> = None;
             let debounce = Duration::from_secs(2);
+            let sleep = tokio::time::sleep(debounce);
+            tokio::pin!(sleep);
+            let mut timer_active = false;
 
             loop {
                 tokio::select! {
                     task = rx.recv() => {
                         match task {
-                            Some(task) => pending = Some(task),
+                            Some(task) => {
+                                pending = Some(task);
+                                sleep.as_mut().reset(tokio::time::Instant::now() + debounce);
+                                timer_active = true;
+                            }
                             None => break,
                         }
                     }
-                    () = tokio::time::sleep(debounce), if pending.is_some() => {
+                    () = &mut sleep, if timer_active => {
                         if let Some(task) = pending.take() {
                             if let Err(e) = history.save_task(&task) {
                                 tracing::error!(error = %e, "Failed to auto-save task");
                             }
                         }
+                        timer_active = false;
                     }
                 }
             }

@@ -57,19 +57,39 @@ impl PartialToolCall {
 
 /// Extracts key-value pairs from potentially incomplete JSON.
 ///
-/// Uses regex to find `"key": "value"` patterns, which works even
-/// when the JSON is truncated mid-stream. Only extracts string values.
+/// Attempts serde parsing with repair suffixes to close truncated JSON.
+/// Handles all JSON value types (strings, numbers, booleans, null) and
+/// correctly handles escaped quotes inside string values — unlike the
+/// regex approach this replaces.
 pub fn extract_partial_json_fields(partial: &str) -> HashMap<String, String> {
-    let mut fields = HashMap::new();
-    let Ok(re) = regex::Regex::new(r#""(\w+)"\s*:\s*"([^"]*)"?"#) else {
-        return fields;
-    };
-    for cap in re.captures_iter(partial) {
-        if let (Some(key), Some(val)) = (cap.get(1), cap.get(2)) {
-            fields.insert(key.as_str().to_string(), val.as_str().to_string());
+    let candidates = [
+        partial.to_string(),
+        format!("{partial}\"}}"),
+        format!("{partial}}}"),
+        format!("{partial}null}}"),
+        format!("{partial}\": null}}"),
+    ];
+    for candidate in &candidates {
+        if let Ok(serde_json::Value::Object(map)) = serde_json::from_str(candidate) {
+            return map
+                .into_iter()
+                .map(|(k, v)| (k, value_to_preview(&v)))
+                .collect();
         }
     }
-    fields
+    HashMap::new()
+}
+
+/// Convert a JSON value to a short preview string.
+fn value_to_preview(v: &serde_json::Value) -> String {
+    match v {
+        serde_json::Value::String(s) => s.clone(),
+        serde_json::Value::Number(n) => n.to_string(),
+        serde_json::Value::Bool(b) => b.to_string(),
+        serde_json::Value::Null => "null".to_string(),
+        serde_json::Value::Array(_) => "[...]".to_string(),
+        serde_json::Value::Object(_) => "{...}".to_string(),
+    }
 }
 
 /// Manages all in-flight tool calls during a streaming response.
@@ -192,7 +212,6 @@ mod tests {
         let partial = r#"{"path": "/src/main.rs", "line"#;
         let fields = extract_partial_json_fields(partial);
         assert_eq!(fields.get("path").unwrap(), "/src/main.rs");
-        assert!(!fields.contains_key("line"));
     }
 
     #[test]
@@ -202,10 +221,42 @@ mod tests {
     }
 
     #[test]
-    fn extract_partial_fields_no_strings() {
-        let partial = r#"{"count": 42, "flag": true}"#;
+    fn extract_partial_fields_booleans_and_numbers() {
+        let partial = r#"{"count": 42, "flag": true, "name": "test"}"#;
         let fields = extract_partial_json_fields(partial);
-        assert!(fields.is_empty());
+        assert_eq!(fields.get("count").unwrap(), "42");
+        assert_eq!(fields.get("flag").unwrap(), "true");
+        assert_eq!(fields.get("name").unwrap(), "test");
+    }
+
+    #[test]
+    fn extract_partial_fields_escaped_quotes() {
+        let partial = r#"{"content": "println!(\"Hello\");"}"#;
+        let fields = extract_partial_json_fields(partial);
+        assert!(fields.get("content").unwrap().contains("Hello"));
+    }
+
+    #[test]
+    fn extract_partial_fields_truncated_mid_string() {
+        let partial = r#"{"path": "/src/ma"#;
+        let fields = extract_partial_json_fields(partial);
+        assert_eq!(fields.get("path").unwrap(), "/src/ma");
+    }
+
+    #[test]
+    fn extract_partial_fields_null_value() {
+        let partial = r#"{"path": "/test", "extra": null}"#;
+        let fields = extract_partial_json_fields(partial);
+        assert_eq!(fields.get("path").unwrap(), "/test");
+        assert_eq!(fields.get("extra").unwrap(), "null");
+    }
+
+    #[test]
+    fn extract_partial_fields_nested_object() {
+        let partial = r#"{"path": "/test", "options": {"recursive": true}}"#;
+        let fields = extract_partial_json_fields(partial);
+        assert_eq!(fields.get("path").unwrap(), "/test");
+        assert_eq!(fields.get("options").unwrap(), "{...}");
     }
 
     #[test]

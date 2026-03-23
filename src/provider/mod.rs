@@ -1,5 +1,11 @@
 //! LLM provider abstraction and implementations.
 //!
+//! **String ownership note**: `StreamChunk` fields use owned `String` rather
+//! than `Cow<'_, str>` or `bytes::Bytes`. Owned types are required for
+//! `Send + 'static` across async channel boundaries — this is idiomatic Rust
+//! for message passing. Accumulation buffers use `with_capacity()` to minimize
+//! reallocations during streaming.
+//!
 //! All providers implement a common `Provider` trait that returns a
 //! `Stream<Item = Result<StreamChunk>>`. This normalizes the differences
 //! between provider APIs behind a uniform interface.
