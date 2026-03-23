@@ -566,15 +566,16 @@ All tests in this step are integration tests placed in `tests/` directory. They 
 Run with: `cargo test --test '*'`
 
 ## Acceptance Criteria
-- [ ] Integration test infrastructure (`tests/common/mod.rs`) with shared helpers
-- [ ] Slash command dispatch tests (help, yolo, mode, model, new)
-- [ ] Cancellation flow tests (single cancel, double cancel, token reset)
-- [ ] Config reload tests (valid reload, invalid preserves old, controller message)
-- [ ] Ignore controller tests (defaults, custom patterns, negation, filter)
-- [ ] System prompt assembly tests (environment, rules, yolo, mode)
-- [ ] Cost and token formatting/calculation tests
-- [ ] Task history roundtrip tests (save, load, list, prune, message conversion)
-- [ ] Workspace context tests (respects ignore, max depth)
-- [ ] All tests pass with `cargo test`
-- [ ] `cargo clippy -- -D warnings` passes
-- [ ] Zero regressions in existing 702+ unit tests
+- [x] Integration test infrastructure with shared helpers
+- [x] Slash command dispatch tests (help, yolo, mode, model, new)
+- [x] Cancellation flow tests (single cancel, double cancel, token reset)
+- [x] Config reload tests (valid reload, invalid preserves old, controller message)
+- [x] Ignore controller tests (defaults, custom patterns, negation, filter)
+- [x] System prompt assembly tests (environment, rules, yolo, mode, MCP, XML tools, ordering)
+- [x] Cost and token formatting/calculation tests
+- [x] Task history roundtrip tests (save, load, list, prune, message conversion)
+- [x] Workspace context tests (respects ignore, max depth, truncation, hidden dirs)
+- [x] Error handling tests (validate_config, map all error variants, display)
+- [x] All tests pass with `cargo test` (750 total)
+- [x] `cargo clippy -- -D warnings` passes
+- [x] Zero regressions in existing 702+ unit tests

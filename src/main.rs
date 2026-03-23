@@ -8,6 +8,8 @@ mod context;
 mod controller;
 mod error;
 mod ignore;
+#[cfg(test)]
+mod integration_tests;
 mod permission;
 mod prompt;
 mod provider;

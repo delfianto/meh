@@ -78,7 +78,7 @@
 | Step | File | Description | Status | Notes |
 |------|------|-------------|--------|-------|
 | 38 | [STEP38.md](STEP38.md) | Integration wiring (connect all modules to runtime) | `[x]` | PR #35 |
-| 39 | [STEP39.md](STEP39.md) | Integration tests (end-to-end verification) | `[ ]` | Depends on: 38 |
+| 39 | [STEP39.md](STEP39.md) | Integration tests (end-to-end verification) | `[x]` | PR #36 |
 
 ## Summary
 
@@ -90,8 +90,8 @@
 | 4. Advanced | 8 | 0 | 0 | 8 | 0 |
 | 5. Polish | 6 | 0 | 0 | 6 | 0 |
 | 6. Critical | 7 | 0 | 0 | 7 | 0 |
-| 7. Integration | 2 | 1 | 0 | 1 | 0 |
-| **Total** | **39** | **1** | **0** | **38** | **0** |
+| 7. Integration | 2 | 0 | 0 | 2 | 0 |
+| **Total** | **39** | **0** | **0** | **39** | **0** |
 
 ---
 
