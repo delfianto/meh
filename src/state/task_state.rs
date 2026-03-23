@@ -34,6 +34,14 @@ pub struct TaskState {
     pub tools_executed: u32,
     /// Whether the task is currently running.
     pub is_running: bool,
+    /// Estimated current context window usage (input tokens for next call).
+    pub context_tokens: u64,
+    /// Model's context window size.
+    pub context_window: u32,
+    /// Input tokens from the most recent API call.
+    pub last_input_tokens: u64,
+    /// Output tokens from the most recent API call.
+    pub last_output_tokens: u64,
 }
 
 impl TaskState {
@@ -49,6 +57,10 @@ impl TaskState {
             api_calls: 0,
             tools_executed: 0,
             is_running: true,
+            context_tokens: 0,
+            context_window: 0,
+            last_input_tokens: 0,
+            last_output_tokens: 0,
         }
     }
 
@@ -79,6 +91,10 @@ mod tests {
         assert_eq!(ts.total_cost, 0.0);
         assert_eq!(ts.api_calls, 0);
         assert_eq!(ts.tools_executed, 0);
+        assert_eq!(ts.context_tokens, 0);
+        assert_eq!(ts.context_window, 0);
+        assert_eq!(ts.last_input_tokens, 0);
+        assert_eq!(ts.last_output_tokens, 0);
     }
 
     #[test]

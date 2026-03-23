@@ -52,7 +52,7 @@
 
 | Step | File | Description | Status | Notes |
 |------|------|-------------|--------|-------|
-| 25 | [STEP25.md](STEP25.md) | Token counting and display | `[ ]` | Depends on: 03, 07 |
+| 25 | [STEP25.md](STEP25.md) | Token counting and display | `[x]` | PR #22 |
 | 26 | [STEP26.md](STEP26.md) | Cost tracking | `[ ]` | Depends on: 25, 05–10 |
 | 27 | [STEP27.md](STEP27.md) | Retry logic with backoff | `[ ]` | Depends on: 05 |
 | 28 | [STEP28.md](STEP28.md) | Chunk batching for smooth TUI | `[ ]` | Depends on: 06, 07 |
@@ -81,9 +81,9 @@
 | 2. Providers | 6 | 0 | 0 | 6 | 0 |
 | 3. Tools | 6 | 0 | 0 | 6 | 0 |
 | 4. Advanced | 8 | 0 | 0 | 8 | 0 |
-| 5. Polish | 6 | 6 | 0 | 0 | 0 |
+| 5. Polish | 6 | 5 | 0 | 1 | 0 |
 | 6. Critical | 7 | 7 | 0 | 0 | 0 |
-| **Total** | **37** | **13** | **0** | **24** | **0** |
+| **Total** | **37** | **12** | **0** | **25** | **0** |
 
 ---
 

@@ -117,6 +117,8 @@ fn apply_ui_update(
             cost,
             is_streaming,
             is_yolo,
+            context_tokens,
+            context_window,
         } => {
             if let Some(m) = mode {
                 status.mode = m;
@@ -132,6 +134,12 @@ fn apply_ui_update(
             }
             if let Some(y) = is_yolo {
                 status.is_yolo = y;
+            }
+            if let Some(ct) = context_tokens {
+                status.context_tokens = ct;
+            }
+            if let Some(cw) = context_window {
+                status.context_window = cw;
             }
         }
         UiUpdate::ToolApproval { .. } | UiUpdate::SubAgentUpdate { .. } => {}
@@ -159,6 +167,8 @@ fn run_tui(
         total_cost: 0.0,
         is_streaming: false,
         is_yolo: yolo,
+        context_tokens: 0,
+        context_window: 0,
     };
     let mut stream_state = StreamState {
         is_streaming: false,
