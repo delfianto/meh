@@ -114,6 +114,8 @@ pub enum UiUpdate {
     },
     /// Open the settings panel.
     ShowSettings,
+    /// Config was updated — refresh settings view with new config.
+    ConfigUpdated(Box<crate::state::config::AppConfig>),
     /// Signal that the app should quit.
     Quit,
 }

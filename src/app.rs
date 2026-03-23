@@ -194,7 +194,8 @@ fn apply_ui_update(
         }
         UiUpdate::ToolApproval { .. }
         | UiUpdate::SubAgentUpdate { .. }
-        | UiUpdate::ShowSettings => {}
+        | UiUpdate::ShowSettings
+        | UiUpdate::ConfigUpdated(_) => {}
         UiUpdate::Quit => return true,
     }
     false
@@ -218,7 +219,7 @@ async fn run_tui_async(
     let mut input = InputWidget::new();
     let mut status = StatusBarState {
         mode: "ACT".to_string(),
-        model_name: "claude-sonnet-4-20250514".to_string(),
+        model_name: "claude-sonnet-4-6".to_string(),
         provider: default_provider.to_string(),
         total_tokens: 0,
         total_cost: 0.0,
@@ -255,7 +256,7 @@ async fn run_tui_async(
     let mut render_tick = tokio::time::interval(Duration::from_millis(16));
     let mut dirty = true;
     let mut settings_view: Option<SettingsView> = None;
-    let current_config = app_config;
+    let mut current_config = app_config;
 
     loop {
         tokio::select! {
@@ -328,6 +329,13 @@ async fn run_tui_async(
                 match update {
                     Some(UiUpdate::ShowSettings) => {
                         settings_view = Some(SettingsView::new(&current_config));
+                        dirty = true;
+                    }
+                    Some(UiUpdate::ConfigUpdated(new_config)) => {
+                        current_config = *new_config;
+                        if let Some(ref mut sv) = settings_view {
+                            sv.rebuild_rows(&current_config);
+                        }
                         dirty = true;
                     }
                     Some(u) => {

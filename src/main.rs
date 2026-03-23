@@ -69,14 +69,36 @@ fn main() -> anyhow::Result<()> {
     error::install_panic_hook();
     let cli = Cli::parse();
 
-    let filter = if cli.verbose { "debug" } else { "info" };
-    tracing_subscriber::fmt()
-        .with_env_filter(
-            tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| tracing_subscriber::EnvFilter::new(filter)),
-        )
-        .with_target(false)
-        .init();
+    let filter = if cli.verbose { "debug" } else { "warn" };
+    let log_dir = dirs::home_dir()
+        .unwrap_or_else(|| std::path::PathBuf::from("."))
+        .join(".meh");
+    let _ = std::fs::create_dir_all(&log_dir);
+    let log_file = std::fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(log_dir.join("meh.log"))
+        .ok();
+
+    if let Some(file) = log_file {
+        tracing_subscriber::fmt()
+            .with_env_filter(
+                tracing_subscriber::EnvFilter::try_from_default_env()
+                    .unwrap_or_else(|_| tracing_subscriber::EnvFilter::new(filter)),
+            )
+            .with_target(false)
+            .with_writer(std::sync::Mutex::new(file))
+            .with_ansi(false)
+            .init();
+    } else {
+        tracing_subscriber::fmt()
+            .with_env_filter(
+                tracing_subscriber::EnvFilter::try_from_default_env()
+                    .unwrap_or_else(|_| tracing_subscriber::EnvFilter::new(filter)),
+            )
+            .with_target(false)
+            .init();
+    }
 
     let runtime = tokio::runtime::Builder::new_multi_thread()
         .enable_all()
@@ -133,7 +155,7 @@ mod tests {
             "--provider",
             "anthropic",
             "--model",
-            "claude-sonnet-4-20250514",
+            "claude-sonnet-4-6",
             "--mode",
             "plan",
             "--yolo",
@@ -142,7 +164,7 @@ mod tests {
         ])
         .unwrap();
         assert_eq!(cli.provider.as_deref(), Some("anthropic"));
-        assert_eq!(cli.model.as_deref(), Some("claude-sonnet-4-20250514"));
+        assert_eq!(cli.model.as_deref(), Some("claude-sonnet-4-6"));
         assert_eq!(cli.mode.as_deref(), Some("plan"));
         assert!(cli.yolo);
         assert!(cli.verbose);

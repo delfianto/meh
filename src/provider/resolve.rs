@@ -9,7 +9,7 @@ use crate::state::task_state::Mode;
 pub struct ResolvedModel {
     /// Provider name (e.g., "anthropic", "openai").
     pub provider: String,
-    /// Model identifier (e.g., "claude-sonnet-4-20250514").
+    /// Model identifier (e.g., "claude-sonnet-4-6").
     pub model_id: String,
     /// Thinking token budget, if configured.
     pub thinking_budget: Option<u32>,
@@ -50,7 +50,7 @@ pub fn default_model_for_provider(provider: &str) -> &str {
         "gemini" => "gemini-2.5-flash",
         "openrouter" => "anthropic/claude-sonnet-4",
         // Default to Anthropic's flagship model for unknown providers
-        _ => "claude-sonnet-4-20250514",
+        _ => "claude-sonnet-4-6",
     }
 }
 
@@ -107,7 +107,7 @@ mod tests {
         let config = AppConfig::default();
         let resolved = resolve_model_for_mode(&config, Mode::Plan);
         assert_eq!(resolved.provider, "anthropic");
-        assert_eq!(resolved.model_id, "claude-sonnet-4-20250514");
+        assert_eq!(resolved.model_id, "claude-sonnet-4-6");
     }
 
     #[test]
@@ -139,7 +139,7 @@ mod tests {
                 },
                 act: ModeModelConfig {
                     provider: Some("anthropic".to_string()),
-                    model: Some("claude-sonnet-4-20250514".to_string()),
+                    model: Some("claude-sonnet-4-6".to_string()),
                     thinking_budget: Some(10000),
                 },
                 ..Default::default()
@@ -154,20 +154,14 @@ mod tests {
 
     #[test]
     fn test_default_model_for_provider() {
-        assert_eq!(
-            default_model_for_provider("anthropic"),
-            "claude-sonnet-4-20250514"
-        );
+        assert_eq!(default_model_for_provider("anthropic"), "claude-sonnet-4-6");
         assert_eq!(default_model_for_provider("openai"), "gpt-4.1");
         assert_eq!(default_model_for_provider("gemini"), "gemini-2.5-flash");
         assert_eq!(
             default_model_for_provider("openrouter"),
             "anthropic/claude-sonnet-4"
         );
-        assert_eq!(
-            default_model_for_provider("unknown"),
-            "claude-sonnet-4-20250514"
-        );
+        assert_eq!(default_model_for_provider("unknown"), "claude-sonnet-4-6");
     }
 
     #[test]

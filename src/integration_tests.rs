@@ -628,8 +628,10 @@ mod cost_token_integration {
 
     #[test]
     fn known_pricing_lookup() {
-        assert!(cost::get_known_pricing("claude-sonnet-4-20250514").is_some());
-        assert!(cost::get_known_pricing("gpt-4.1").is_some());
+        assert!(cost::get_known_pricing("claude-sonnet-4-6").is_some());
+        assert!(cost::get_known_pricing("claude-opus-4-6").is_some());
+        assert!(cost::get_known_pricing("gpt-5.4").is_some());
+        assert!(cost::get_known_pricing("gemini-3.1-pro-preview").is_some());
         assert!(cost::get_known_pricing("gemini-2.5-pro").is_some());
         assert!(cost::get_known_pricing("unknown-model").is_none());
     }

@@ -443,6 +443,9 @@ impl Controller {
             role: crate::tui::chat_view::ChatRole::System,
             content: format!("Setting updated: {}", change.key),
         });
+
+        let updated = self.state.config().await;
+        self.send_ui(UiUpdate::ConfigUpdated(Box::new(updated)));
     }
 
     /// Handles a parsed slash command.
@@ -611,7 +614,7 @@ impl Controller {
                 .provider
                 .anthropic
                 .model
-                .unwrap_or_else(|| "claude-sonnet-4-20250514".to_string()),
+                .unwrap_or_else(|| "claude-sonnet-4-6".to_string()),
             max_tokens: 8192,
             temperature: None,
             thinking_budget: None,
