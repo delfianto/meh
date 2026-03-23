@@ -478,6 +478,10 @@ pub fn build_features_rows(config: &AppConfig) -> Vec<SettingRow> {
 
 /// Render the settings panel into the given area.
 pub fn render_settings(frame: &mut Frame, area: Rect, view: &SettingsView) {
+    // Clear the entire settings area to prevent stale content from
+    // previous frames bleeding through (ratatui double-buffer diff).
+    frame.render_widget(Clear, area);
+
     let chunks = Layout::vertical([
         Constraint::Length(1),
         Constraint::Min(3),
@@ -525,12 +529,14 @@ pub fn render_settings(frame: &mut Frame, area: Rect, view: &SettingsView) {
         })
         .collect();
 
-    let list = List::new(items).block(
-        Block::default()
-            .borders(Borders::ALL)
-            .border_style(Style::default().fg(Color::DarkGray))
-            .title(" Settings "),
-    );
+    let list = List::new(items)
+        .block(
+            Block::default()
+                .borders(Borders::ALL)
+                .border_style(Style::default().fg(Color::DarkGray))
+                .title(" Settings "),
+        )
+        .style(Style::default().bg(Color::Reset));
     frame.render_widget(list, chunks[1]);
 
     let help = if view.editing.is_some() {
