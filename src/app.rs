@@ -40,6 +40,21 @@ impl App {
 
         let config = self.state.config().await;
 
+        // Initialize model registry from models.toml (or built-in defaults)
+        let models_path = crate::state::config::AppConfig::config_dir().join("models.toml");
+        if !models_path.exists() {
+            if let Err(e) =
+                crate::provider::model_registry::ModelRegistry::write_defaults(&models_path)
+            {
+                tracing::warn!(error = %e, "Failed to write default models.toml");
+            }
+        }
+        crate::provider::model_registry::init_global(if models_path.exists() {
+            Some(&models_path)
+        } else {
+            None
+        });
+
         for err in crate::error::validate_config(&config) {
             tracing::warn!("{err}");
         }

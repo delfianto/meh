@@ -423,17 +423,15 @@ mod registry_tests {
 ```
 
 ## Acceptance Criteria
-- [ ] `ModelDef` struct with all model metadata (id, name, provider, pricing, capabilities)
-- [ ] `ModelRegistry` loads from `~/.config/meh/models.toml` or falls back to built-in defaults
-- [ ] `models.toml` auto-generated on first run with all current models
-- [ ] `registry.get()`, `models_for_provider()`, `default_for_provider()`, `pricing()` work
-- [ ] `to_model_info()` converts ModelDef to provider::ModelInfo
-- [ ] Settings UI dropdowns generated from registry (not hardcoded)
-- [ ] `get_known_pricing()` queries registry instead of match statement
-- [ ] Provider constructors use registry for ModelInfo
-- [ ] `default_model_for_provider()` reads from registry
-- [ ] Controller and TUI receive `Arc<ModelRegistry>` from app startup
-- [ ] Adding a new model only requires editing models.toml
-- [ ] All existing tests pass (no regressions)
-- [ ] `cargo clippy -- -D warnings` passes
-- [ ] `cargo test` passes
+- [x] `ModelDef` struct with all model metadata (id, name, provider, pricing, capabilities)
+- [x] `ModelRegistry` loads from `~/.config/meh/models.toml` or falls back to built-in defaults
+- [x] `models.toml` auto-generated on first run with all current models
+- [x] `registry.get()`, `models_for_provider()`, `default_for_provider()`, `pricing()` work
+- [x] `to_model_info()` converts ModelDef to provider::ModelInfo
+- [x] Settings UI dropdowns generated from registry (not hardcoded)
+- [x] `get_known_pricing()` queries registry first, legacy fallback second
+- [x] Global registry via `OnceLock` initialized at app startup
+- [x] Adding a new model only requires editing models.toml
+- [x] All existing tests pass (no regressions)
+- [x] `cargo clippy -- -D warnings` passes
+- [x] `cargo test` passes

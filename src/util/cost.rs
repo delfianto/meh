@@ -66,28 +66,20 @@ pub fn cost_level(cost: f64) -> CostLevel {
 
 /// Look up known pricing for a model by ID.
 ///
-/// Returns `(input_price_per_mtok, output_price_per_mtok)` if known.
+/// Queries the global `ModelRegistry` first, then falls back to a
+/// hardcoded table for legacy model IDs not in the registry.
 pub fn get_known_pricing(model_id: &str) -> Option<(f64, f64)> {
+    if let Some(pricing) = crate::provider::model_registry::global().pricing(model_id) {
+        return Some(pricing);
+    }
+    // Fallback for legacy model IDs not in the registry
     match model_id {
-        // Anthropic
-        "claude-opus-4-6" => Some((5.0, 25.0)),
-        "claude-sonnet-4-6"
-        | "claude-sonnet-4-5"
-        | "claude-sonnet-4-5-20250929"
-        | "claude-sonnet-4-20250514"
-        | "claude-sonnet-4-0" => Some((3.0, 15.0)),
-        "claude-haiku-4-5" | "claude-haiku-4-5-20251001" => Some((1.0, 5.0)),
+        "claude-sonnet-4-20250514" | "claude-sonnet-4-0" => Some((3.0, 15.0)),
         "claude-opus-4-20250514" | "claude-opus-4-0" => Some((15.0, 75.0)),
-        // OpenAI
-        "gpt-5.4" | "gpt-4.1" | "o3" => Some((2.0, 8.0)),
-        "gpt-5.4-mini" | "gpt-4.1-mini" => Some((0.4, 1.6)),
-        "gpt-5.4-nano" => Some((0.1, 0.4)),
+        "gpt-4.1" | "o3" => Some((2.0, 8.0)),
+        "gpt-4.1-mini" => Some((0.4, 1.6)),
         "gpt-4o" => Some((2.5, 10.0)),
         "o4-mini" => Some((1.1, 4.4)),
-        // Google Gemini
-        "gemini-3.1-pro-preview" | "gemini-2.5-pro" => Some((1.25, 10.0)),
-        "gemini-3-flash-preview" | "gemini-2.5-flash" => Some((0.15, 0.60)),
-        "gemini-3.1-flash-lite-preview" => Some((0.075, 0.30)),
         _ => None,
     }
 }

@@ -83,7 +83,7 @@
 | 41 | [STEP41.md](STEP41.md) | Security & robustness fixes (Gemini audit round 2) | `[x]` | PR #38 |
 | 42 | [STEP42.md](STEP42.md) | jiter JSON parser, async TUI, task abort safety | `[x]` | PR #39 |
 | 43 | [STEP43.md](STEP43.md) | Interactive settings UI (provider, keys, model) | `[x]` | PR #40 |
-| 44 | [STEP44.md](STEP44.md) | Centralized model registry from models.toml | `[ ]` | Depends on: 43 |
+| 44 | [STEP44.md](STEP44.md) | Centralized model registry from models.toml | `[x]` | PR #44 |
 
 ## Summary
 
@@ -95,8 +95,8 @@
 | 4. Advanced | 8 | 0 | 0 | 8 | 0 |
 | 5. Polish | 6 | 0 | 0 | 6 | 0 |
 | 6. Critical | 7 | 0 | 0 | 7 | 0 |
-| 7. Integration | 7 | 1 | 0 | 6 | 0 |
-| **Total** | **44** | **1** | **0** | **43** | **0** |
+| 7. Integration | 7 | 0 | 0 | 7 | 0 |
+| **Total** | **44** | **0** | **0** | **44** | **0** |
 
 ---
 

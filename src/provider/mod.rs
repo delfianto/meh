@@ -37,6 +37,7 @@
 pub mod anthropic;
 pub mod common;
 pub mod gemini;
+pub mod model_registry;
 pub mod openai;
 pub mod openrouter;
 pub mod resolve;

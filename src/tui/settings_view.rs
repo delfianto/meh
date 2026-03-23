@@ -289,6 +289,7 @@ pub fn mask_secret(s: &str) -> String {
 /// Build rows for the API tab.
 #[allow(clippy::too_many_lines)]
 pub fn build_api_rows(config: &AppConfig) -> Vec<SettingRow> {
+    let registry = crate::provider::model_registry::global();
     let providers = vec![
         "anthropic".to_string(),
         "openai".to_string(),
@@ -335,12 +336,7 @@ pub fn build_api_rows(config: &AppConfig) -> Vec<SettingRow> {
             key: "provider.anthropic.model".to_string(),
             label: "Anthropic Model".to_string(),
             value: SettingValue::Select {
-                options: vec![
-                    "claude-sonnet-4-6".to_string(),
-                    "claude-opus-4-6".to_string(),
-                    "claude-haiku-4-5".to_string(),
-                    "claude-sonnet-4-5".to_string(),
-                ],
+                options: registry.model_ids_for_provider("anthropic"),
                 selected: 0,
             },
             description: "Model ID".to_string(),
@@ -370,11 +366,7 @@ pub fn build_api_rows(config: &AppConfig) -> Vec<SettingRow> {
             key: "provider.openai.model".to_string(),
             label: "OpenAI Model".to_string(),
             value: SettingValue::Select {
-                options: vec![
-                    "gpt-5.4".to_string(),
-                    "gpt-5.4-mini".to_string(),
-                    "gpt-5.4-nano".to_string(),
-                ],
+                options: registry.model_ids_for_provider("openai"),
                 selected: 0,
             },
             description: "Model ID".to_string(),
@@ -404,13 +396,7 @@ pub fn build_api_rows(config: &AppConfig) -> Vec<SettingRow> {
             key: "provider.gemini.model".to_string(),
             label: "Gemini Model".to_string(),
             value: SettingValue::Select {
-                options: vec![
-                    "gemini-3.1-pro-preview".to_string(),
-                    "gemini-3-flash-preview".to_string(),
-                    "gemini-3.1-flash-lite-preview".to_string(),
-                    "gemini-2.5-pro".to_string(),
-                    "gemini-2.5-flash".to_string(),
-                ],
+                options: registry.model_ids_for_provider("gemini"),
                 selected: 0,
             },
             description: "Model ID".to_string(),
