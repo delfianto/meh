@@ -743,13 +743,13 @@ mod hub_tests {
 ```
 
 ## Acceptance Criteria
-- [ ] MCP JSON-RPC types serialize/deserialize correctly
-- [ ] Stdio transport spawns process, communicates via stdin/stdout
-- [ ] McpClient handles initialize handshake, tools/list, tools/call
-- [ ] McpHub manages multiple server connections
-- [ ] MCP tools appear in system prompt with server prefix
-- [ ] MCP tool handler routes calls through McpHub
-- [ ] Server connection errors logged but don't crash the app
-- [ ] Settings loaded from ~/.meh/mcp_settings.json
-- [ ] `cargo clippy -- -D warnings` passes
-- [ ] All tests pass
+- [x] MCP JSON-RPC types serialize/deserialize correctly
+- [x] Stdio transport spawns process, communicates via stdin/stdout
+- [x] McpClient handles initialize handshake, tools/list, tools/call
+- [x] McpHub manages multiple server connections
+- [x] MCP tools appear in system prompt with server prefix
+- [x] MCP tool handler routes calls through McpHub
+- [x] Server connection errors logged but don't crash the app
+- [x] Settings loaded from ~/.meh/mcp_settings.json
+- [x] `cargo clippy -- -D warnings` passes
+- [x] All tests pass
