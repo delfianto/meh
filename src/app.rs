@@ -10,10 +10,12 @@ use crate::tui::{
     self,
     chat_view::{ChatMessage, ChatRole, ChatViewState},
     input::InputWidget,
+    settings_view::{SettingsAction, SettingsView},
     status_bar::StatusBarState,
 };
 use crossterm::event::{Event, EventStream, KeyCode, KeyModifiers};
 use futures::StreamExt;
+use ratatui::layout::{Constraint, Layout};
 use std::time::Duration;
 use tokio::sync::mpsc;
 
@@ -183,7 +185,9 @@ fn apply_ui_update(
                 status.context_window = cw;
             }
         }
-        UiUpdate::ToolApproval { .. } | UiUpdate::SubAgentUpdate { .. } => {}
+        UiUpdate::ToolApproval { .. }
+        | UiUpdate::SubAgentUpdate { .. }
+        | UiUpdate::ShowSettings => {}
         UiUpdate::Quit => return true,
     }
     false
@@ -242,6 +246,8 @@ async fn run_tui_async(
     let mut event_stream = EventStream::new();
     let mut render_tick = tokio::time::interval(Duration::from_millis(16));
     let mut dirty = true;
+    let mut settings_view: Option<SettingsView> = None;
+    let current_config = crate::state::config::AppConfig::default();
 
     loop {
         tokio::select! {
@@ -249,12 +255,34 @@ async fn run_tui_async(
                 match maybe_event {
                     Some(Ok(Event::Key(key))) => {
                         dirty = true;
+
+                        // Global: Ctrl+C always cancels/quits
                         if key.code == KeyCode::Char('c')
                             && key.modifiers.contains(KeyModifiers::CONTROL)
                         {
                             let _ = ctrl_tx.send(ControllerMessage::CancelTask);
                             continue;
                         }
+
+                        // Route to settings view if active
+                        if let Some(ref mut sv) = settings_view {
+                            match sv.handle_key(key, &current_config) {
+                                SettingsAction::Close => {
+                                    sv.editing = None;
+                                    settings_view = None;
+                                }
+                                SettingsAction::Apply(change) => {
+                                    sv.editing = None;
+                                    let _ = ctrl_tx.send(
+                                        ControllerMessage::SettingsChange(change)
+                                    );
+                                }
+                                SettingsAction::Continue => {}
+                            }
+                            continue;
+                        }
+
+                        // Chat mode key handling
                         if key.code == KeyCode::Char('y')
                             && key.modifiers.contains(KeyModifiers::CONTROL)
                         {
@@ -282,7 +310,7 @@ async fn run_tui_async(
                         }
                     }
                     Some(Ok(Event::Resize(_, _))) => dirty = true,
-                    Some(Ok(_)) => {} // Mouse, focus, paste — ignore
+                    Some(Ok(_)) => {}
                     Some(Err(e)) => tracing::warn!(error = %e, "Event stream error"),
                     None => break,
                 }
@@ -290,6 +318,10 @@ async fn run_tui_async(
 
             update = ui_rx.recv() => {
                 match update {
+                    Some(UiUpdate::ShowSettings) => {
+                        settings_view = Some(SettingsView::new(&current_config));
+                        dirty = true;
+                    }
                     Some(u) => {
                         if apply_ui_update(u, &mut chat_state, &mut status, &mut stream_state) {
                             break;
@@ -303,7 +335,22 @@ async fn run_tui_async(
             _ = render_tick.tick() => {
                 if dirty {
                     tui.draw(|frame| {
-                        tui::app_layout::render_app(frame, &chat_state, &input, &status);
+                        if let Some(ref sv) = settings_view {
+                            let chunks = Layout::vertical([
+                                Constraint::Percentage(40),
+                                Constraint::Percentage(60),
+                            ]).split(frame.area());
+                            tui::app_layout::render_app(
+                                frame, &chat_state, &input, &status,
+                            );
+                            crate::tui::settings_view::render_settings(
+                                frame, chunks[1], sv,
+                            );
+                        } else {
+                            tui::app_layout::render_app(
+                                frame, &chat_state, &input, &status,
+                            );
+                        }
                     })?;
                     dirty = false;
                 }

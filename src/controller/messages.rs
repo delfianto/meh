@@ -44,6 +44,9 @@ pub enum ControllerMessage {
 
     /// User entered a slash command.
     SlashCommand(crate::commands::SlashCommand, String),
+
+    /// User changed a setting in the settings UI.
+    SettingsChange(crate::tui::settings_view::SettingsChange),
 }
 
 /// A tool call that needs approval and execution.
@@ -109,6 +112,8 @@ pub enum UiUpdate {
         sub_task_id: String,
         content: String,
     },
+    /// Open the settings panel.
+    ShowSettings,
     /// Signal that the app should quit.
     Quit,
 }

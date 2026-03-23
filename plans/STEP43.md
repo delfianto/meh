@@ -651,22 +651,22 @@ mod settings_view_tests {
 ```
 
 ## Acceptance Criteria
-- [ ] `/settings` opens tabbed settings panel over chat
-- [ ] Three tabs: API, Permissions, Features
-- [ ] Tab navigation with `←/→` arrows and `1/2/3` number keys
-- [ ] Row navigation with `↑/↓` arrows
-- [ ] `Enter` opens edit overlay for text/secret/select fields
-- [ ] `Space` toggles boolean fields inline
-- [ ] `Esc` closes settings panel (returns to chat)
-- [ ] Provider selection from searchable list
-- [ ] API key input with password masking (`••••••`)
-- [ ] Env var references supported (`$ANTHROPIC_API_KEY`)
-- [ ] Model selection per provider from known models list
-- [ ] Permission mode selection (ask/auto/yolo)
-- [ ] Auto-approve toggles for each tool category
-- [ ] Changes persisted to config.toml via StateManager
-- [ ] Settings confirmation message shown in chat
-- [ ] `render_app` handles split layout when settings visible
-- [ ] All existing tests pass
-- [ ] `cargo clippy -- -D warnings` passes
-- [ ] `cargo test` passes
+- [x] `/settings` opens tabbed settings panel over chat
+- [x] Three tabs: API, Permissions, Features
+- [x] Tab navigation with `←/→` arrows and `1/2/3` number keys
+- [x] Row navigation with `↑/↓` arrows
+- [x] `Enter` opens edit overlay for text/secret/select fields
+- [x] `Space` toggles boolean fields inline
+- [x] `Esc` closes settings panel (returns to chat)
+- [x] Provider selection from list
+- [x] API key input with password masking (`••••••`)
+- [x] Env var references supported (`$ANTHROPIC_API_KEY`)
+- [x] Model selection per provider from known models list
+- [x] Permission mode selection (ask/auto/yolo)
+- [x] Auto-approve toggles for each tool category
+- [x] Changes persisted to config.toml via StateManager
+- [x] Settings confirmation message shown in chat
+- [x] `render_app` handles split layout when settings visible
+- [x] All existing tests pass
+- [x] `cargo clippy -- -D warnings` passes
+- [x] `cargo test` passes
