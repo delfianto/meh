@@ -109,6 +109,8 @@ mod tests {
             total_cost: 0.0,
             is_streaming: false,
             is_yolo: false,
+            context_tokens: 0,
+            context_window: 0,
         }
     }
 
