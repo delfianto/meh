@@ -5,6 +5,7 @@ mod agent;
 mod app;
 mod context;
 mod controller;
+mod error;
 mod ignore;
 mod permission;
 mod prompt;
@@ -59,6 +60,7 @@ pub struct Cli {
 }
 
 fn main() -> anyhow::Result<()> {
+    error::install_panic_hook();
     let cli = Cli::parse();
 
     let filter = if cli.verbose { "debug" } else { "info" };

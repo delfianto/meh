@@ -57,7 +57,7 @@
 | 27 | [STEP27.md](STEP27.md) | Retry logic with backoff | `[x]` | PR #24 |
 | 28 | [STEP28.md](STEP28.md) | Chunk batching for smooth TUI | `[x]` | PR #25 |
 | 29 | [STEP29.md](STEP29.md) | Config file hot-reload | `[x]` | PR #26 |
-| 30 | [STEP30.md](STEP30.md) | Comprehensive error messages | `[ ]` | Depends on: all prior |
+| 30 | [STEP30.md](STEP30.md) | Comprehensive error messages | `[x]` | PR #27 |
 
 ---
 
@@ -81,9 +81,9 @@
 | 2. Providers | 6 | 0 | 0 | 6 | 0 |
 | 3. Tools | 6 | 0 | 0 | 6 | 0 |
 | 4. Advanced | 8 | 0 | 0 | 8 | 0 |
-| 5. Polish | 6 | 1 | 0 | 5 | 0 |
+| 5. Polish | 6 | 0 | 0 | 6 | 0 |
 | 6. Critical | 7 | 7 | 0 | 0 | 0 |
-| **Total** | **37** | **8** | **0** | **29** | **0** |
+| **Total** | **37** | **7** | **0** | **30** | **0** |
 
 ---
 
