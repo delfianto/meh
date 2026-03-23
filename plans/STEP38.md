@@ -254,14 +254,15 @@ mod wiring_tests {
 ```
 
 ## Acceptance Criteria
-- [ ] `validate_config()` called at startup, warnings logged
-- [ ] `build_full_system_prompt()` used with `PromptConfig` in controller
-- [ ] `EnvironmentInfo::detect()` called and passed to prompt builder
-- [ ] `IgnoreController` instantiated in controller from cwd
-- [ ] `AutoSaver` instantiated and `queue_save` called on `TaskComplete`
-- [ ] `--resume` flag loads task from history and provides context
-- [ ] User rules loaded from `.mehrules` and injected into system prompt
-- [ ] Cost calculation available as fallback when provider omits `total_cost`
-- [ ] All existing tests still pass (no regressions)
-- [ ] `cargo clippy -- -D warnings` passes
-- [ ] `cargo test` passes
+- [x] `validate_config()` called at startup, warnings logged
+- [x] `build_full_system_prompt()` used with `PromptConfig` in controller
+- [x] `EnvironmentInfo::detect()` called and passed to prompt builder
+- [x] `IgnoreController` instantiated in controller from cwd
+- [x] `AutoSaver` instantiated and `queue_save` called on `TaskComplete`
+- [x] `--resume` flag loads task from history and provides context
+- [x] User rules loaded from `.mehrules` and injected into system prompt
+- [x] Cost calculation available as fallback when provider omits `total_cost`
+- [x] `MehError` used for all user-facing error display in controller
+- [x] All existing tests still pass (no regressions)
+- [x] `cargo clippy -- -D warnings` passes
+- [x] `cargo test` passes

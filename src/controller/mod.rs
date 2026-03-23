@@ -15,9 +15,13 @@ pub mod messages;
 pub mod task;
 
 use crate::agent::{AgentMessage, TaskAgent};
+use crate::error::{self, MehError};
+use crate::ignore::IgnoreController;
 use crate::permission::PermissionMode;
+use crate::prompt::rules::{load_rules, rules_to_prompt};
 use crate::provider::{self, ModelConfig, StreamChunk};
 use crate::state::StateManager;
+use crate::state::history::{AutoSaver, PersistedTask, TaskHistory};
 use crate::streaming::ui_batcher::UiBatcher;
 use messages::{ControllerMessage, ToolCallResult, UiUpdate};
 use std::time::Duration;
@@ -48,6 +52,10 @@ pub struct Controller {
     batcher: UiBatcher,
     /// Cooperative cancellation with double-cancel detection.
     cancellation: TaskCancellation,
+    /// Path protection via .mehignore rules.
+    ignore: IgnoreController,
+    /// Debounced auto-saver for task persistence.
+    auto_saver: Option<AutoSaver>,
 }
 
 impl Controller {
@@ -62,6 +70,13 @@ impl Controller {
     ) {
         let (ctrl_tx, rx) = mpsc::unbounded_channel();
         let (ui_tx, ui_rx) = mpsc::unbounded_channel();
+        let cwd = std::env::current_dir().unwrap_or_default();
+        let ignore = IgnoreController::new(&cwd);
+        let auto_saver = TaskHistory::default_dir()
+            .ok()
+            .and_then(|dir| TaskHistory::new(dir).ok())
+            .map(AutoSaver::new);
+
         let ctrl = Self {
             rx,
             ui_tx,
@@ -72,6 +87,8 @@ impl Controller {
             running: true,
             batcher: UiBatcher::new(60),
             cancellation: TaskCancellation::new(),
+            ignore,
+            auto_saver,
         };
         (ctrl, ctrl_tx, ui_rx)
     }
@@ -107,6 +124,14 @@ impl Controller {
         for update in self.batcher.flush() {
             let _ = self.ui_tx.send(update);
         }
+    }
+
+    /// Send a user-facing error message to the TUI.
+    fn send_error(&self, message: &str) {
+        let _ = self.ui_tx.send(UiUpdate::AppendMessage {
+            role: crate::tui::chat_view::ChatRole::System,
+            content: message.to_string(),
+        });
     }
 
     /// Dispatches a single message to the appropriate handler.
@@ -224,14 +249,29 @@ impl Controller {
                     context_tokens: None,
                     context_window: None,
                 });
+                if let Some(ref saver) = self.auto_saver {
+                    let title = crate::state::history::generate_title(&result.task_id);
+                    saver.queue_save(PersistedTask {
+                        task_id: result.task_id.clone(),
+                        title,
+                        created_at: chrono::Utc::now(),
+                        updated_at: chrono::Utc::now(),
+                        messages: vec![],
+                        mode: "act".to_string(),
+                        provider: "anthropic".to_string(),
+                        model: String::new(),
+                        total_input_tokens: result.total_tokens,
+                        total_output_tokens: 0,
+                        total_cost: result.total_cost,
+                        completed: true,
+                    });
+                }
             }
             ControllerMessage::TaskError(error) => {
                 self.flush_batcher();
                 tracing::error!(%error, "Task error");
-                let _ = self.ui_tx.send(UiUpdate::AppendMessage {
-                    role: crate::tui::chat_view::ChatRole::System,
-                    content: format!("Error: {error}"),
-                });
+                let mapped = error::map_provider_error(&anyhow::anyhow!("{error}"), "provider");
+                self.send_error(&mapped.to_string());
                 let _ = self.ui_tx.send(UiUpdate::StatusUpdate {
                     mode: None,
                     tokens: None,
@@ -386,24 +426,24 @@ impl Controller {
             context_window: None,
         });
 
-        let api_key = self.state.resolve_api_key("anthropic").await;
+        let config = self.state.config().await;
+        let provider_name = &config.provider.default;
+        let api_key = self.state.resolve_api_key(provider_name).await;
         let Some(api_key) = api_key else {
-            let _ = self.ui_tx.send(UiUpdate::AppendMessage {
-                role: crate::tui::chat_view::ChatRole::System,
-                content: "No API key configured. Set ANTHROPIC_API_KEY environment variable."
-                    .to_string(),
-            });
+            let err = MehError::NoApiKey {
+                provider: provider_name.clone(),
+                provider_lower: provider_name.to_lowercase(),
+                env_var: error::default_env_var(provider_name),
+            };
+            self.send_error(&err.to_string());
             return;
         };
 
-        let config = self.state.config().await;
-        let provider = match provider::create_provider("anthropic", &api_key, None) {
+        let provider = match provider::create_provider(provider_name, &api_key, None) {
             Ok(p) => p,
             Err(e) => {
-                let _ = self.ui_tx.send(UiUpdate::AppendMessage {
-                    role: crate::tui::chat_view::ChatRole::System,
-                    content: format!("Failed to create provider: {e}"),
-                });
+                let mapped = error::map_provider_error(&e, provider_name);
+                self.send_error(&mapped.to_string());
                 return;
             }
         };
@@ -411,8 +451,24 @@ impl Controller {
         let (agent_tx, agent_rx) = mpsc::unbounded_channel();
         self.agent_tx = Some(agent_tx);
 
+        let cwd = std::env::current_dir()
+            .map_or_else(|_| ".".to_string(), |p| p.to_string_lossy().to_string());
         let mode = crate::prompt::resolve_default_mode(&config.mode.default);
-        let system_prompt = crate::prompt::build_system_prompt(".", mode);
+        let env_info = crate::prompt::environment::EnvironmentInfo::detect(&cwd);
+        let rules = load_rules(std::path::Path::new(&cwd));
+        let user_rules = rules_to_prompt(&rules, &[]);
+        let is_yolo = self.permission_mode == PermissionMode::Yolo;
+
+        let system_prompt = crate::prompt::build_full_system_prompt(&crate::prompt::PromptConfig {
+            cwd,
+            mode,
+            tool_definitions_xml: None,
+            mcp_tools_description: String::new(),
+            user_rules,
+            environment_info: env_info.to_prompt_section(),
+            yolo_mode: is_yolo,
+        });
+
         let model_config = ModelConfig {
             model_id: config
                 .provider
@@ -600,13 +656,17 @@ mod controller_tests {
         let update = ui_rx.recv().await.unwrap();
         match update {
             UiUpdate::AppendMessage { content, role } => {
-                assert!(content.contains("something broke"));
+                assert!(
+                    content.contains("Cannot connect") || content.contains("something broke"),
+                    "Error message should be user-friendly, got: {content}"
+                );
                 assert_eq!(role, ChatRole::System);
             }
             other => panic!("Expected AppendMessage, got {other:?}"),
         }
 
         ctrl_tx.send(ControllerMessage::Quit).unwrap();
+        let _ = ui_rx.recv().await;
         let _ = ui_rx.recv().await;
         let _ = ui_rx.recv().await;
         handle.await.unwrap().unwrap();
