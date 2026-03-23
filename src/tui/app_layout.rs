@@ -15,6 +15,17 @@ pub fn render_app(
     input: &super::input::InputWidget,
     status: &super::status_bar::StatusBarState,
 ) {
+    render_app_in(frame, frame.area(), chat_state, input, status);
+}
+
+/// Renders the application layout within a specific area.
+pub fn render_app_in(
+    frame: &mut Frame,
+    area: Rect,
+    chat_state: &super::chat_view::ChatViewState,
+    input: &super::input::InputWidget,
+    status: &super::status_bar::StatusBarState,
+) {
     let chunks = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
@@ -22,7 +33,7 @@ pub fn render_app(
             Constraint::Min(5),    // Chat view (fills remaining)
             Constraint::Length(3), // Input area
         ])
-        .split(frame.area());
+        .split(area);
 
     super::status_bar::render_status_bar(frame, chunks[0], status);
     super::chat_view::render_chat_view(frame, chunks[1], chat_state);
