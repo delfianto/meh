@@ -881,19 +881,19 @@ mod persistence_tests {
 ```
 
 ## Acceptance Criteria
-- [ ] Task state serializes to JSON with all messages and metadata
-- [ ] Messages round-trip through PersistedMessage without data loss
-- [ ] Thinking blocks with signatures preserved through serialization
-- [ ] Tool use/result blocks preserved through serialization
-- [ ] Tasks saved to ~/.meh/history/{task_id}.json
-- [ ] Atomic writes (temp file + rename) prevent corruption
+- [x] Task state serializes to JSON with all messages and metadata
+- [x] Messages round-trip through PersistedMessage without data loss
+- [x] Thinking blocks with signatures preserved through serialization
+- [x] Tool use/result blocks preserved through serialization
+- [x] Tasks saved to ~/.meh/history/{task_id}.json
+- [x] Atomic writes (temp file + rename) prevent corruption
 - [ ] Auto-save debounced to every 2 seconds
 - [ ] --resume flag loads task and continues conversation
-- [ ] --history flag lists recent tasks with metadata
-- [ ] Task history listable, sorted newest-first
-- [ ] Task deletion and pruning work correctly
+- [x] --history flag lists recent tasks with metadata
+- [x] Task history listable, sorted newest-first
+- [x] Task deletion and pruning work correctly
 - [ ] Ctrl+H opens history view in TUI
 - [ ] History view supports navigation and task selection
-- [ ] Task title auto-generated from first user message
-- [ ] `cargo clippy -- -D warnings` passes
-- [ ] All tests pass
+- [x] Task title auto-generated from first user message
+- [x] `cargo clippy -- -D warnings` passes
+- [x] All tests pass

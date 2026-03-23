@@ -228,13 +228,13 @@ mod batcher_tests {
 ```
 
 ## Acceptance Criteria
-- [ ] Text deltas batched within frame interval (~16ms at 60fps)
-- [ ] Thinking deltas batched separately
-- [ ] Status updates coalesced (latest wins)
-- [ ] Periodic tick ensures batches flush even without new messages
-- [ ] TUI only redraws when dirty
-- [ ] Stream end force-flushes all pending content
-- [ ] No visible flicker during fast streaming
-- [ ] CPU usage reduced when idle (no unnecessary redraws)
-- [ ] `cargo clippy -- -D warnings` passes
-- [ ] All tests pass
+- [x] Text deltas batched within frame interval (~16ms at 60fps)
+- [x] Thinking deltas batched separately
+- [x] Status updates coalesced (latest wins)
+- [x] Periodic tick ensures batches flush even without new messages
+- [x] TUI only redraws when dirty
+- [x] Stream end force-flushes all pending content
+- [x] No visible flicker during fast streaming
+- [x] CPU usage reduced when idle (no unnecessary redraws)
+- [x] `cargo clippy -- -D warnings` passes
+- [x] All tests pass

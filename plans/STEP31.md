@@ -270,13 +270,13 @@ mod truncation_tests {
 ```
 
 ## Acceptance Criteria
-- [ ] ContextManager tracks token budget vs model context window
-- [ ] Summarization triggers at 85% utilization
+- [x] ContextManager tracks token budget vs model context window
+- [x] Summarization triggers at 85% utilization
 - [ ] LLM-based summarization preserves key decisions and file changes
-- [ ] Truncation frees tool results first, then oldest messages
-- [ ] Initial user message (task description) never removed
-- [ ] Summary injected as first message after deletion
-- [ ] Deleted range tracked for persistence
+- [x] Truncation frees tool results first, then oldest messages
+- [x] Initial user message (task description) never removed
+- [x] Summary injected as first message after deletion
+- [x] Deleted range tracked for persistence
 - [ ] TUI notified when summarization occurs
-- [ ] `cargo clippy -- -D warnings` passes
-- [ ] All tests pass
+- [x] `cargo clippy -- -D warnings` passes
+- [x] All tests pass

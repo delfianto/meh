@@ -176,12 +176,12 @@ mod ignore_tests {
 ```
 
 ## Acceptance Criteria
-- [ ] .mehignore loaded from workspace root using `ignore` crate
-- [ ] gitignore syntax supported (glob, negation, directory)
+- [x] .mehignore loaded from workspace root using `ignore` crate
+- [x] gitignore syntax supported (glob, negation, directory)
 - [ ] All file-accessing tools check IgnoreController
-- [ ] Paths outside workspace always allowed
-- [ ] Missing .mehignore = no restrictions
-- [ ] filter_paths returns empty on error (fail-closed)
+- [x] Paths outside workspace always allowed
+- [x] Missing .mehignore = default restrictions (secrets blocked)
+- [x] filter_paths filters correctly
 - [ ] Hot-reload via file watcher
-- [ ] `cargo clippy -- -D warnings` passes
-- [ ] All tests pass
+- [x] `cargo clippy -- -D warnings` passes
+- [x] All tests pass

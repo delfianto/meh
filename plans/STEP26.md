@@ -163,12 +163,12 @@ mod cost_tests {
 ```
 
 ## Acceptance Criteria
-- [ ] Cost calculated per API call from token counts and pricing
-- [ ] Cache read/write tokens priced separately
-- [ ] Thinking tokens priced (at output rate or custom rate)
-- [ ] Known model pricing table for major models
-- [ ] Cumulative cost tracked and displayed in status bar
-- [ ] Cost color-coded by threshold
+- [x] Cost calculated per API call from token counts and pricing
+- [x] Cache read/write tokens priced separately
+- [x] Thinking tokens priced (at output rate or custom rate)
+- [x] Known model pricing table for major models
+- [x] Cumulative cost tracked and displayed in status bar
+- [x] Cost color-coded by threshold
 - [ ] Cost saved in task history
-- [ ] `cargo clippy -- -D warnings` passes
-- [ ] All tests pass
+- [x] `cargo clippy -- -D warnings` passes
+- [x] All tests pass
