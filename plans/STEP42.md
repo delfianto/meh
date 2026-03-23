@@ -26,7 +26,7 @@ Address the final 3 Gemini audit findings: replace the brute-force JSON preview 
 
 **Cargo.toml**:
 ```toml
-jiter = "0.8"
+jiter = "0.13"
 ```
 
 **Implementation**:
@@ -262,16 +262,16 @@ mod abort_tests {
 ```
 
 ## Acceptance Criteria
-- [ ] `jiter` used for incremental JSON parsing with `PartialMode::TrailingStrings`
-- [ ] Serde repair candidates removed from `extract_partial_json_fields`
-- [ ] JSON preview handles partial strings, booleans, numbers, nested objects
-- [ ] TUI migrated from `spawn_blocking` + `poll_event` to async `EventStream`
-- [ ] `tokio::select!` multiplexes terminal events, UI updates, and render ticks
-- [ ] Zero CPU when TUI is idle (no polling)
-- [ ] `catch_unwind` preserved for TUI panic safety
-- [ ] Agent `JoinHandle` stored on Controller
-- [ ] Cancel sends message then aborts after 5s timeout if agent hangs
-- [ ] Handle cleared on `TaskComplete`
-- [ ] All existing tests pass (no regressions)
-- [ ] `cargo clippy -- -D warnings` passes
-- [ ] `cargo test` passes
+- [x] `jiter` used for incremental JSON parsing with `PartialMode::TrailingStrings`
+- [x] Serde repair candidates removed from `extract_partial_json_fields`
+- [x] JSON preview handles partial strings, booleans, numbers, nested objects
+- [x] TUI migrated from `spawn_blocking` + `poll_event` to async `EventStream`
+- [x] `tokio::select!` multiplexes terminal events, UI updates, and render ticks
+- [x] Zero CPU when TUI is idle (no polling)
+- [x] `catch_unwind` removed (async incompatible) — RAII Drop + panic hook cover restoration
+- [x] Agent `JoinHandle` stored on Controller
+- [x] Cancel sends message then aborts after 5s timeout if agent hangs
+- [x] Handle cleared on `TaskComplete`
+- [x] All existing tests pass (no regressions)
+- [x] `cargo clippy -- -D warnings` passes
+- [x] `cargo test` passes

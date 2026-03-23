@@ -9,11 +9,11 @@ use crate::state::StateManager;
 use crate::tui::{
     self,
     chat_view::{ChatMessage, ChatRole, ChatViewState},
-    event::{TuiEvent, poll_event},
     input::InputWidget,
     status_bar::StatusBarState,
 };
-use ratatui::crossterm::event::{KeyCode, KeyModifiers};
+use crossterm::event::{Event, EventStream, KeyCode, KeyModifiers};
+use futures::StreamExt;
 use std::time::Duration;
 use tokio::sync::mpsc;
 
@@ -72,10 +72,8 @@ impl App {
         }
 
         let default_provider = config.provider.default.clone();
-        let tui_result = tokio::task::spawn_blocking(move || {
-            run_tui(&ctrl_tx, ui_rx, &default_provider, initial_prompt, yolo)
-        })
-        .await?;
+        let tui_result =
+            run_tui_async(&ctrl_tx, ui_rx, &default_provider, initial_prompt, yolo).await;
 
         controller_handle.abort();
         tui_result
@@ -191,11 +189,12 @@ fn apply_ui_update(
     false
 }
 
-/// The TUI event loop. Runs on a blocking thread.
+/// Async TUI event loop using `crossterm::EventStream` + `tokio::select!`.
 ///
-/// Wrapped in `catch_unwind` to guarantee terminal restoration on panic.
+/// Zero CPU when idle — sleeps until a terminal event, UI update, or render tick fires.
+/// Wrapped in `catch_unwind` for panic safety.
 #[allow(clippy::too_many_lines)]
-fn run_tui(
+async fn run_tui_async(
     ctrl_tx: &mpsc::UnboundedSender<ControllerMessage>,
     mut ui_rx: mpsc::Receiver<UiUpdate>,
     default_provider: &str,
@@ -240,38 +239,15 @@ fn run_tui(
         });
     }
 
-    let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-        let mut dirty = true;
+    let mut event_stream = EventStream::new();
+    let mut render_tick = tokio::time::interval(Duration::from_millis(16));
+    let mut dirty = true;
 
-        loop {
-            let mut got_update = false;
-            while let Ok(update) = ui_rx.try_recv() {
-                if apply_ui_update(update, &mut chat_state, &mut status, &mut stream_state) {
-                    tui.restore()?;
-                    return Ok(());
-                }
-                got_update = true;
-            }
-            if got_update {
-                dirty = true;
-            }
-
-            if dirty {
-                tui.draw(|frame| {
-                    tui::app_layout::render_app(frame, &chat_state, &input, &status);
-                })?;
-                dirty = false;
-            }
-
-            let poll_timeout = if status.is_streaming {
-                Duration::from_millis(16)
-            } else {
-                Duration::from_millis(100)
-            };
-
-            if let Some(event) = poll_event(poll_timeout) {
-                match event {
-                    TuiEvent::Key(key) => {
+    loop {
+        tokio::select! {
+            maybe_event = event_stream.next() => {
+                match maybe_event {
+                    Some(Ok(Event::Key(key))) => {
                         dirty = true;
                         if key.code == KeyCode::Char('c')
                             && key.modifiers.contains(KeyModifiers::CONTROL)
@@ -286,9 +262,11 @@ fn run_tui(
                             continue;
                         }
                         if let Some(text) = input.handle_key(key) {
-                            if let Some((cmd, args)) = crate::commands::parse_slash_command(&text) {
-                                let _ =
-                                    ctrl_tx.send(ControllerMessage::SlashCommand(cmd, args));
+                            if let Some((cmd, args)) =
+                                crate::commands::parse_slash_command(&text)
+                            {
+                                let _ = ctrl_tx
+                                    .send(ControllerMessage::SlashCommand(cmd, args));
                             } else {
                                 chat_state.push_message(ChatMessage {
                                     role: ChatRole::User,
@@ -303,24 +281,36 @@ fn run_tui(
                             }
                         }
                     }
-                    TuiEvent::Resize(_, _) => dirty = true,
-                    TuiEvent::Tick | TuiEvent::Mouse(_) => {}
+                    Some(Ok(Event::Resize(_, _))) => dirty = true,
+                    Some(Ok(_)) => {} // Mouse, focus, paste — ignore
+                    Some(Err(e)) => tracing::warn!(error = %e, "Event stream error"),
+                    None => break,
+                }
+            }
+
+            update = ui_rx.recv() => {
+                match update {
+                    Some(u) => {
+                        if apply_ui_update(u, &mut chat_state, &mut status, &mut stream_state) {
+                            break;
+                        }
+                        dirty = true;
+                    }
+                    None => break,
+                }
+            }
+
+            _ = render_tick.tick() => {
+                if dirty {
+                    tui.draw(|frame| {
+                        tui::app_layout::render_app(frame, &chat_state, &input, &status);
+                    })?;
+                    dirty = false;
                 }
             }
         }
-    }));
+    }
 
     tui.restore()?;
-
-    match result {
-        Ok(inner) => inner,
-        Err(payload) => {
-            let msg = payload
-                .downcast_ref::<String>()
-                .map(String::as_str)
-                .or_else(|| payload.downcast_ref::<&str>().copied())
-                .unwrap_or("unknown panic");
-            Err(anyhow::anyhow!("TUI panicked: {msg}"))
-        }
-    }
+    Ok(())
 }

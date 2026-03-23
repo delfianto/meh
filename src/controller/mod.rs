@@ -68,6 +68,8 @@ pub struct Controller {
     cwd: String,
     /// Tool calls awaiting user approval.
     pending_tool_calls: HashMap<String, ToolCallRequest>,
+    /// Handle to the running agent task for abort safety.
+    agent_handle: Option<tokio::task::JoinHandle<anyhow::Result<()>>>,
 }
 
 impl Controller {
@@ -113,6 +115,7 @@ impl Controller {
             tool_executor,
             cwd,
             pending_tool_calls: HashMap::new(),
+            agent_handle: None,
         };
         (ctrl, ctrl_tx, ui_rx)
     }
@@ -191,6 +194,15 @@ impl Controller {
                 tracing::info!("Task cancellation requested");
                 if let Some(tx) = &self.agent_tx {
                     let _ = tx.send(AgentMessage::Cancel);
+                }
+                if let Some(handle) = self.agent_handle.take() {
+                    tokio::spawn(async move {
+                        tokio::time::sleep(Duration::from_secs(5)).await;
+                        if !handle.is_finished() {
+                            tracing::warn!("Agent did not exit within 5s, aborting");
+                            handle.abort();
+                        }
+                    });
                 }
                 self.flush_batcher();
                 self.send_ui(UiUpdate::StreamEnd);
@@ -277,6 +289,7 @@ impl Controller {
                 tracing::info!(task_id = result.task_id, "Task completed");
                 self.flush_batcher();
                 self.agent_tx = None;
+                self.agent_handle = None;
                 self.send_ui(UiUpdate::StreamEnd);
                 if let Some(msg) = result.completion_message {
                     self.send_ui(UiUpdate::AppendMessage {
@@ -533,7 +546,7 @@ impl Controller {
         );
         agent.add_user_message(text);
 
-        tokio::spawn(agent.run());
+        self.agent_handle = Some(tokio::spawn(agent.run()));
     }
 
     /// Forwards stream chunks to the TUI, batching text and thinking deltas.
@@ -569,11 +582,10 @@ impl Controller {
 
     /// Handles a tool call request — checks permissions before execution.
     fn handle_tool_call_request(&mut self, req: ToolCallRequest) {
-        let category = self
-            .tool_executor
-            .registry()
-            .get(&req.tool_name)
-            .map_or(crate::tool::ToolCategory::Command, crate::tool::ToolHandler::category);
+        let category = self.tool_executor.registry().get(&req.tool_name).map_or(
+            crate::tool::ToolCategory::Command,
+            crate::tool::ToolHandler::category,
+        );
 
         let result = self
             .permission_ctrl

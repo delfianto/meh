@@ -81,7 +81,7 @@
 | 39 | [STEP39.md](STEP39.md) | Integration tests (end-to-end verification) | `[x]` | PR #36 |
 | 40 | [STEP40.md](STEP40.md) | Code quality fixes (Gemini audit) | `[x]` | PR #37 |
 | 41 | [STEP41.md](STEP41.md) | Security & robustness fixes (Gemini audit round 2) | `[x]` | PR #38 |
-| 42 | [STEP42.md](STEP42.md) | jiter JSON parser, async TUI, task abort safety | `[ ]` | Depends on: 41 |
+| 42 | [STEP42.md](STEP42.md) | jiter JSON parser, async TUI, task abort safety | `[x]` | PR #39 |
 
 ## Summary
 
@@ -93,8 +93,8 @@
 | 4. Advanced | 8 | 0 | 0 | 8 | 0 |
 | 5. Polish | 6 | 0 | 0 | 6 | 0 |
 | 6. Critical | 7 | 0 | 0 | 7 | 0 |
-| 7. Integration | 5 | 1 | 0 | 4 | 0 |
-| **Total** | **42** | **1** | **0** | **41** | **0** |
+| 7. Integration | 5 | 0 | 0 | 5 | 0 |
+| **Total** | **42** | **0** | **0** | **42** | **0** |
 
 ---
 
