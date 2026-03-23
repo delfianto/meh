@@ -71,7 +71,7 @@
 | 34 | [STEP34.md](STEP34.md) | User rules system (.mehrules) | `[x]` | PR #31 |
 | 35 | [STEP35.md](STEP35.md) | Slash commands (/help, /clear, /compact, etc.) | `[x]` | PR #32 |
 | 36 | [STEP36.md](STEP36.md) | Graceful cancellation (Ctrl+C mid-stream) | `[x]` | PR #33 |
-| 37 | [STEP37.md](STEP37.md) | System prompt builder (modular assembly) | `[ ]` | Depends on: 33, 34, 32, 11, 17, 21 |
+| 37 | [STEP37.md](STEP37.md) | System prompt builder (modular assembly) | `[x]` | PR #34 |
 
 ## Summary
 
@@ -82,8 +82,8 @@
 | 3. Tools | 6 | 0 | 0 | 6 | 0 |
 | 4. Advanced | 8 | 0 | 0 | 8 | 0 |
 | 5. Polish | 6 | 0 | 0 | 6 | 0 |
-| 6. Critical | 7 | 1 | 0 | 6 | 0 |
-| **Total** | **37** | **1** | **0** | **36** | **0** |
+| 6. Critical | 7 | 0 | 0 | 7 | 0 |
+| **Total** | **37** | **0** | **0** | **37** | **0** |
 
 ---
 

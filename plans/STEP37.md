@@ -484,17 +484,17 @@ mod prompt_builder_tests {
 ```
 
 ## Acceptance Criteria
-- [ ] System prompt includes: role, environment, capabilities, mode, tools, MCP, rules, guidelines
-- [ ] Plan mode excludes write/command capabilities from description
-- [ ] Act mode includes full tool access
-- [ ] YOLO mode adds appropriate auto-approve instruction
-- [ ] Non-YOLO mode adds "explain before using tools" instruction
-- [ ] User rules injected when present
-- [ ] XML tool definitions included for non-native-tool providers
-- [ ] MCP tools described when connected
-- [ ] Prompt cleaned of excessive whitespace
-- [ ] Environment info formatted correctly
-- [ ] Sections appear in consistent order
-- [ ] Workspace file tree summary included (respects .mehignore)
-- [ ] `cargo clippy -- -D warnings` passes
-- [ ] All tests pass
+- [x] System prompt includes: role, environment, capabilities, mode, tools, MCP, rules, guidelines
+- [x] Plan mode excludes write/command capabilities from description
+- [x] Act mode includes full tool access
+- [x] YOLO mode adds appropriate auto-approve instruction
+- [x] Non-YOLO mode adds "explain before using tools" instruction
+- [x] User rules injected when present
+- [x] XML tool definitions included for non-native-tool providers
+- [x] MCP tools described when connected
+- [x] Prompt cleaned of excessive whitespace
+- [x] Environment info formatted correctly
+- [x] Sections appear in consistent order
+- [x] Workspace file tree summary included (respects .mehignore)
+- [x] `cargo clippy -- -D warnings` passes
+- [x] All tests pass
