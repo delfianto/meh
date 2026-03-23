@@ -16,7 +16,7 @@ mod slash_command_dispatch {
     async fn make_controller() -> (
         Controller,
         tokio::sync::mpsc::UnboundedSender<ControllerMessage>,
-        tokio::sync::mpsc::UnboundedReceiver<UiUpdate>,
+        tokio::sync::mpsc::Receiver<UiUpdate>,
     ) {
         let dir = tempfile::TempDir::new().unwrap();
         let path = dir.path().join("config.toml");
@@ -24,7 +24,7 @@ mod slash_command_dispatch {
         Controller::new(state, PermissionMode::Ask)
     }
 
-    fn drain(rx: &mut tokio::sync::mpsc::UnboundedReceiver<UiUpdate>) -> Vec<UiUpdate> {
+    fn drain(rx: &mut tokio::sync::mpsc::Receiver<UiUpdate>) -> Vec<UiUpdate> {
         let mut v = Vec::new();
         while let Ok(u) = rx.try_recv() {
             v.push(u);
@@ -187,7 +187,7 @@ mod cancellation_flow {
     async fn make_controller() -> (
         Controller,
         tokio::sync::mpsc::UnboundedSender<ControllerMessage>,
-        tokio::sync::mpsc::UnboundedReceiver<UiUpdate>,
+        tokio::sync::mpsc::Receiver<UiUpdate>,
     ) {
         let dir = tempfile::TempDir::new().unwrap();
         let path = dir.path().join("config.toml");
@@ -195,7 +195,7 @@ mod cancellation_flow {
         Controller::new(state, PermissionMode::Ask)
     }
 
-    fn drain(rx: &mut tokio::sync::mpsc::UnboundedReceiver<UiUpdate>) -> Vec<UiUpdate> {
+    fn drain(rx: &mut tokio::sync::mpsc::Receiver<UiUpdate>) -> Vec<UiUpdate> {
         let mut v = Vec::new();
         while let Ok(u) = rx.try_recv() {
             v.push(u);

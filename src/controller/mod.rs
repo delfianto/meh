@@ -17,7 +17,9 @@ pub mod task;
 use crate::agent::{AgentMessage, TaskAgent};
 use crate::error::{self, MehError};
 use crate::ignore::IgnoreController;
-use crate::permission::PermissionMode;
+use crate::permission::auto_approve::AutoApproveRules;
+use crate::permission::command_perms::CommandPermissions;
+use crate::permission::{PermissionController, PermissionMode, PermissionResult};
 use crate::prompt::rules::{load_rules, rules_to_prompt};
 use crate::provider::{self, ModelConfig, StreamChunk};
 use crate::state::StateManager;
@@ -25,7 +27,8 @@ use crate::state::history::{AutoSaver, PersistedTask, TaskHistory};
 use crate::streaming::ui_batcher::UiBatcher;
 use crate::tool::executor::ToolExecutor;
 use crate::tool::{ToolContext, ToolRegistry};
-use messages::{ControllerMessage, ToolCallResult, UiUpdate};
+use messages::{ControllerMessage, ToolCallRequest, ToolCallResult, UiUpdate};
+use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Duration;
 use task::TaskCancellation;
@@ -37,18 +40,18 @@ use tokio::sync::mpsc;
 /// `UnboundedSender<ControllerMessage>` returned by [`Controller::new`].
 /// The controller sends UI updates via `ui_tx`.
 pub struct Controller {
-    /// Receives messages from all components.
+    /// Receives messages from all components (unbounded — agents send many chunks).
     rx: mpsc::UnboundedReceiver<ControllerMessage>,
-    /// Sends updates to the TUI.
-    ui_tx: mpsc::UnboundedSender<UiUpdate>,
+    /// Sends updates to the TUI (bounded for backpressure).
+    ui_tx: mpsc::Sender<UiUpdate>,
     /// Clone of the controller's own sender (given to agents).
     ctrl_tx: mpsc::UnboundedSender<ControllerMessage>,
     /// Sender to the active agent (if any).
     agent_tx: Option<mpsc::UnboundedSender<AgentMessage>>,
     /// Application state.
     state: StateManager,
-    /// Current permission mode (tracked for YOLO toggle).
-    permission_mode: PermissionMode,
+    /// Permission controller with auto-approve rules.
+    permission_ctrl: PermissionController,
     /// Whether the controller is running.
     running: bool,
     /// Batches rapid stream updates for smooth TUI rendering.
@@ -61,27 +64,39 @@ pub struct Controller {
     auto_saver: Option<AutoSaver>,
     /// Executes tool calls via the tool registry.
     tool_executor: Arc<ToolExecutor>,
+    /// Working directory for the current session.
+    cwd: String,
+    /// Tool calls awaiting user approval.
+    pending_tool_calls: HashMap<String, ToolCallRequest>,
 }
 
 impl Controller {
     /// Creates a new Controller and returns `(controller, ctrl_tx, ui_rx)`.
+    ///
+    /// Uses bounded channels (4096 capacity) for backpressure safety.
     pub fn new(
         state: StateManager,
         permission_mode: PermissionMode,
     ) -> (
         Self,
         mpsc::UnboundedSender<ControllerMessage>,
-        mpsc::UnboundedReceiver<UiUpdate>,
+        mpsc::Receiver<UiUpdate>,
     ) {
         let (ctrl_tx, rx) = mpsc::unbounded_channel();
-        let (ui_tx, ui_rx) = mpsc::unbounded_channel();
-        let cwd = std::env::current_dir().unwrap_or_default();
-        let ignore = IgnoreController::new(&cwd);
+        let (ui_tx, ui_rx) = mpsc::channel(4096);
+        let cwd_path = std::env::current_dir().unwrap_or_default();
+        let cwd = cwd_path.to_string_lossy().to_string();
+        let ignore = IgnoreController::new(&cwd_path);
         let auto_saver = TaskHistory::default_dir()
             .ok()
             .and_then(|dir| TaskHistory::new(dir).ok())
             .map(AutoSaver::new);
         let tool_executor = Arc::new(ToolExecutor::new(Arc::new(ToolRegistry::with_defaults())));
+        let permission_ctrl = PermissionController::new(
+            permission_mode,
+            AutoApproveRules::default(),
+            CommandPermissions::default(),
+        );
 
         let ctrl = Self {
             rx,
@@ -89,13 +104,15 @@ impl Controller {
             ctrl_tx: ctrl_tx.clone(),
             agent_tx: None,
             state,
-            permission_mode,
+            permission_ctrl,
             running: true,
             batcher: UiBatcher::new(60),
             cancellation: TaskCancellation::new(),
             ignore,
             auto_saver,
             tool_executor,
+            cwd,
+            pending_tool_calls: HashMap::new(),
         };
         (ctrl, ctrl_tx, ui_rx)
     }
@@ -129,13 +146,20 @@ impl Controller {
     /// Flushes batched updates to the TUI.
     fn flush_batcher(&mut self) {
         for update in self.batcher.flush() {
-            let _ = self.ui_tx.send(update);
+            let _ = self.ui_tx.try_send(update);
+        }
+    }
+
+    /// Send a UI update, dropping if channel is full.
+    fn send_ui(&self, update: UiUpdate) {
+        if self.ui_tx.try_send(update).is_err() {
+            tracing::warn!("UI channel full, dropping update");
         }
     }
 
     /// Send a user-facing error message to the TUI.
     fn send_error(&self, message: &str) {
-        let _ = self.ui_tx.send(UiUpdate::AppendMessage {
+        self.send_ui(UiUpdate::AppendMessage {
             role: crate::tui::chat_view::ChatRole::System,
             content: message.to_string(),
         });
@@ -153,14 +177,14 @@ impl Controller {
                 if let Some(tx) = &self.agent_tx {
                     let _ = tx.send(AgentMessage::Cancel);
                 }
-                let _ = self.ui_tx.send(UiUpdate::Quit);
+                self.send_ui(UiUpdate::Quit);
                 self.running = false;
             }
             ControllerMessage::CancelTask => {
                 let is_double = self.cancellation.cancel();
                 if is_double {
                     tracing::info!("Double cancel detected, force quitting");
-                    let _ = self.ui_tx.send(UiUpdate::Quit);
+                    self.send_ui(UiUpdate::Quit);
                     self.running = false;
                     return;
                 }
@@ -169,12 +193,12 @@ impl Controller {
                     let _ = tx.send(AgentMessage::Cancel);
                 }
                 self.flush_batcher();
-                let _ = self.ui_tx.send(UiUpdate::StreamEnd);
-                let _ = self.ui_tx.send(UiUpdate::AppendMessage {
+                self.send_ui(UiUpdate::StreamEnd);
+                self.send_ui(UiUpdate::AppendMessage {
                     role: crate::tui::chat_view::ChatRole::System,
                     content: "Task cancelled by user.".to_string(),
                 });
-                let _ = self.ui_tx.send(UiUpdate::StatusUpdate {
+                self.send_ui(UiUpdate::StatusUpdate {
                     mode: None,
                     tokens: None,
                     cost: None,
@@ -188,15 +212,15 @@ impl Controller {
                 tracing::info!("Toggle thinking visibility");
             }
             ControllerMessage::ToggleYolo => {
-                let new_mode = if self.permission_mode == PermissionMode::Yolo {
+                let new_mode = if self.permission_ctrl.mode() == PermissionMode::Yolo {
                     PermissionMode::Ask
                 } else {
                     PermissionMode::Yolo
                 };
-                self.permission_mode = new_mode;
+                self.permission_ctrl.set_mode(new_mode);
                 let is_yolo = new_mode == PermissionMode::Yolo;
                 tracing::info!(?new_mode, "Permission mode toggled");
-                let _ = self.ui_tx.send(UiUpdate::StatusUpdate {
+                self.send_ui(UiUpdate::StatusUpdate {
                     mode: None,
                     tokens: None,
                     cost: None,
@@ -212,7 +236,7 @@ impl Controller {
                     crate::state::task_state::Mode::Plan => "PLAN",
                     crate::state::task_state::Mode::Act => "ACT",
                 };
-                let _ = self.ui_tx.send(UiUpdate::StatusUpdate {
+                self.send_ui(UiUpdate::StatusUpdate {
                     mode: Some(mode_str.to_string()),
                     tokens: None,
                     cost: None,
@@ -225,9 +249,22 @@ impl Controller {
             ControllerMessage::ApprovalResponse {
                 tool_use_id,
                 approved,
-                ..
+                always_allow,
             } => {
-                tracing::info!(tool_use_id, approved, "Approval response received");
+                if let Some(req) = self.pending_tool_calls.remove(&tool_use_id) {
+                    if approved {
+                        if always_allow {
+                            self.permission_ctrl.always_allow_tool(&req.tool_name);
+                        }
+                        self.execute_tool(req);
+                    } else if let Some(tx) = &self.agent_tx {
+                        let _ = tx.send(AgentMessage::ToolCallResult(ToolCallResult {
+                            tool_use_id,
+                            content: "Tool call denied by user.".to_string(),
+                            is_error: true,
+                        }));
+                    }
+                }
             }
             ControllerMessage::StreamChunk(chunk) => {
                 self.handle_stream_chunk(chunk);
@@ -240,14 +277,14 @@ impl Controller {
                 tracing::info!(task_id = result.task_id, "Task completed");
                 self.flush_batcher();
                 self.agent_tx = None;
-                let _ = self.ui_tx.send(UiUpdate::StreamEnd);
+                self.send_ui(UiUpdate::StreamEnd);
                 if let Some(msg) = result.completion_message {
-                    let _ = self.ui_tx.send(UiUpdate::AppendMessage {
+                    self.send_ui(UiUpdate::AppendMessage {
                         role: crate::tui::chat_view::ChatRole::System,
                         content: msg,
                     });
                 }
-                let _ = self.ui_tx.send(UiUpdate::StatusUpdate {
+                self.send_ui(UiUpdate::StatusUpdate {
                     mode: None,
                     tokens: Some(result.total_tokens),
                     cost: Some(result.total_cost),
@@ -279,7 +316,7 @@ impl Controller {
                 tracing::error!(%error, "Task error");
                 let mapped = error::map_provider_error(&anyhow::anyhow!("{error}"), "provider");
                 self.send_error(&mapped.to_string());
-                let _ = self.ui_tx.send(UiUpdate::StatusUpdate {
+                self.send_ui(UiUpdate::StatusUpdate {
                     mode: None,
                     tokens: None,
                     cost: None,
@@ -292,7 +329,7 @@ impl Controller {
             ControllerMessage::ConfigReload => match self.state.reload().await {
                 Ok(()) => {
                     tracing::info!("Config reloaded successfully");
-                    let _ = self.ui_tx.send(UiUpdate::AppendMessage {
+                    self.send_ui(UiUpdate::AppendMessage {
                         role: crate::tui::chat_view::ChatRole::System,
                         content: "Config reloaded.".to_string(),
                     });
@@ -316,31 +353,31 @@ impl Controller {
         use crate::commands::SlashCommand;
         match cmd {
             SlashCommand::Help => {
-                let _ = self.ui_tx.send(UiUpdate::AppendMessage {
+                self.send_ui(UiUpdate::AppendMessage {
                     role: crate::tui::chat_view::ChatRole::System,
                     content: crate::commands::help_text(),
                 });
             }
             SlashCommand::Clear => {
-                let _ = self.ui_tx.send(UiUpdate::AppendMessage {
+                self.send_ui(UiUpdate::AppendMessage {
                     role: crate::tui::chat_view::ChatRole::System,
                     content: "Chat cleared.".to_string(),
                 });
             }
             SlashCommand::Compact => {
-                let _ = self.ui_tx.send(UiUpdate::AppendMessage {
+                self.send_ui(UiUpdate::AppendMessage {
                     role: crate::tui::chat_view::ChatRole::System,
                     content: "Conversation compacted.".to_string(),
                 });
             }
             SlashCommand::History => {
-                let _ = self.ui_tx.send(UiUpdate::AppendMessage {
+                self.send_ui(UiUpdate::AppendMessage {
                     role: crate::tui::chat_view::ChatRole::System,
                     content: "Use --history flag to list tasks.".to_string(),
                 });
             }
             SlashCommand::Settings => {
-                let _ = self.ui_tx.send(UiUpdate::AppendMessage {
+                self.send_ui(UiUpdate::AppendMessage {
                     role: crate::tui::chat_view::ChatRole::System,
                     content: "Settings: edit ~/.config/meh/config.toml".to_string(),
                 });
@@ -350,7 +387,7 @@ impl Controller {
                     let _ = tx.send(AgentMessage::Cancel);
                 }
                 self.agent_tx = None;
-                let _ = self.ui_tx.send(UiUpdate::AppendMessage {
+                self.send_ui(UiUpdate::AppendMessage {
                     role: crate::tui::chat_view::ChatRole::System,
                     content: "New task started. What would you like to do?".to_string(),
                 });
@@ -360,14 +397,14 @@ impl Controller {
                     "plan" => "PLAN",
                     "act" => "ACT",
                     _ => {
-                        let _ = self.ui_tx.send(UiUpdate::AppendMessage {
+                        self.send_ui(UiUpdate::AppendMessage {
                             role: crate::tui::chat_view::ChatRole::System,
                             content: format!("Unknown mode: {mode}. Use /plan or /act."),
                         });
                         return;
                     }
                 };
-                let _ = self.ui_tx.send(UiUpdate::StatusUpdate {
+                self.send_ui(UiUpdate::StatusUpdate {
                     mode: Some(mode_str.to_string()),
                     tokens: None,
                     cost: None,
@@ -376,7 +413,7 @@ impl Controller {
                     context_tokens: None,
                     context_window: None,
                 });
-                let _ = self.ui_tx.send(UiUpdate::AppendMessage {
+                self.send_ui(UiUpdate::AppendMessage {
                     role: crate::tui::chat_view::ChatRole::System,
                     content: format!("Switched to {mode_str} mode."),
                 });
@@ -387,21 +424,21 @@ impl Controller {
                 } else {
                     format!("Model changed to: {model_name}")
                 };
-                let _ = self.ui_tx.send(UiUpdate::AppendMessage {
+                self.send_ui(UiUpdate::AppendMessage {
                     role: crate::tui::chat_view::ChatRole::System,
                     content: msg,
                 });
             }
             SlashCommand::Yolo => {
-                let new_mode = if self.permission_mode == PermissionMode::Yolo {
+                let new_mode = if self.permission_ctrl.mode() == PermissionMode::Yolo {
                     PermissionMode::Ask
                 } else {
                     PermissionMode::Yolo
                 };
-                self.permission_mode = new_mode;
+                self.permission_ctrl.set_mode(new_mode);
                 let is_yolo = new_mode == PermissionMode::Yolo;
                 let status = if is_yolo { "enabled" } else { "disabled" };
-                let _ = self.ui_tx.send(UiUpdate::StatusUpdate {
+                self.send_ui(UiUpdate::StatusUpdate {
                     mode: None,
                     tokens: None,
                     cost: None,
@@ -410,7 +447,7 @@ impl Controller {
                     context_tokens: None,
                     context_window: None,
                 });
-                let _ = self.ui_tx.send(UiUpdate::AppendMessage {
+                self.send_ui(UiUpdate::AppendMessage {
                     role: crate::tui::chat_view::ChatRole::System,
                     content: format!("YOLO mode {status}."),
                 });
@@ -423,7 +460,7 @@ impl Controller {
         tracing::info!(len = text.len(), "User submitted message");
         self.cancellation.reset();
 
-        let _ = self.ui_tx.send(UiUpdate::StatusUpdate {
+        self.send_ui(UiUpdate::StatusUpdate {
             mode: None,
             tokens: None,
             cost: None,
@@ -458,16 +495,14 @@ impl Controller {
         let (agent_tx, agent_rx) = mpsc::unbounded_channel();
         self.agent_tx = Some(agent_tx);
 
-        let cwd = std::env::current_dir()
-            .map_or_else(|_| ".".to_string(), |p| p.to_string_lossy().to_string());
         let mode = crate::prompt::resolve_default_mode(&config.mode.default);
-        let env_info = crate::prompt::environment::EnvironmentInfo::detect(&cwd);
-        let rules = load_rules(std::path::Path::new(&cwd));
+        let env_info = crate::prompt::environment::EnvironmentInfo::detect(&self.cwd);
+        let rules = load_rules(std::path::Path::new(&self.cwd));
         let user_rules = rules_to_prompt(&rules, &[]);
-        let is_yolo = self.permission_mode == PermissionMode::Yolo;
+        let is_yolo = self.permission_ctrl.mode() == PermissionMode::Yolo;
 
         let system_prompt = crate::prompt::build_full_system_prompt(&crate::prompt::PromptConfig {
-            cwd,
+            cwd: self.cwd.clone(),
             mode,
             tool_definitions_xml: None,
             mcp_tools_description: String::new(),
@@ -532,15 +567,55 @@ impl Controller {
         }
     }
 
-    /// Handles a tool call request by dispatching to the tool executor.
-    fn handle_tool_call_request(&self, req: messages::ToolCallRequest) {
+    /// Handles a tool call request — checks permissions before execution.
+    fn handle_tool_call_request(&mut self, req: ToolCallRequest) {
+        let category = self
+            .tool_executor
+            .registry()
+            .get(&req.tool_name)
+            .map_or(crate::tool::ToolCategory::Command, crate::tool::ToolHandler::category);
+
+        let result = self
+            .permission_ctrl
+            .check_tool(&req.tool_name, category, &req.description);
+
+        match result {
+            PermissionResult::Approved => {
+                self.execute_tool(req);
+            }
+            PermissionResult::NeedsApproval {
+                tool_name,
+                description,
+            } => {
+                tracing::info!(tool = tool_name, "Requesting tool approval");
+                self.send_ui(UiUpdate::ToolApproval {
+                    tool_use_id: req.tool_use_id.clone(),
+                    tool_name,
+                    description,
+                });
+                self.pending_tool_calls.insert(req.tool_use_id.clone(), req);
+            }
+            PermissionResult::Denied { reason } => {
+                tracing::warn!(tool = req.tool_name, reason, "Tool call denied");
+                if let Some(tx) = &self.agent_tx {
+                    let _ = tx.send(AgentMessage::ToolCallResult(ToolCallResult {
+                        tool_use_id: req.tool_use_id,
+                        content: format!("Permission denied: {reason}"),
+                        is_error: true,
+                    }));
+                }
+            }
+        }
+    }
+
+    /// Execute a tool call (after permission check passed).
+    fn execute_tool(&self, req: ToolCallRequest) {
         tracing::info!(tool = req.tool_name, "Executing tool call");
         let executor = self.tool_executor.clone();
         let agent_tx = self.agent_tx.clone();
         let ctx = ToolContext {
-            cwd: std::env::current_dir()
-                .map_or_else(|_| ".".to_string(), |p| p.to_string_lossy().to_string()),
-            auto_approved: false,
+            cwd: self.cwd.clone(),
+            auto_approved: self.permission_ctrl.mode() == PermissionMode::Yolo,
         };
 
         tokio::spawn(async move {
@@ -571,7 +646,7 @@ mod controller_tests {
     async fn make_controller() -> (
         Controller,
         tokio::sync::mpsc::UnboundedSender<ControllerMessage>,
-        tokio::sync::mpsc::UnboundedReceiver<UiUpdate>,
+        tokio::sync::mpsc::Receiver<UiUpdate>,
     ) {
         let dir = tempfile::TempDir::new().unwrap();
         let path = dir.path().join("config.toml");

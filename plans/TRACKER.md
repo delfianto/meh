@@ -80,7 +80,7 @@
 | 38 | [STEP38.md](STEP38.md) | Integration wiring (connect all modules to runtime) | `[x]` | PR #35 |
 | 39 | [STEP39.md](STEP39.md) | Integration tests (end-to-end verification) | `[x]` | PR #36 |
 | 40 | [STEP40.md](STEP40.md) | Code quality fixes (Gemini audit) | `[x]` | PR #37 |
-| 41 | [STEP41.md](STEP41.md) | Security & robustness fixes (Gemini audit round 2) | `[ ]` | Depends on: 40 |
+| 41 | [STEP41.md](STEP41.md) | Security & robustness fixes (Gemini audit round 2) | `[x]` | PR #38 |
 
 ## Summary
 
@@ -92,8 +92,8 @@
 | 4. Advanced | 8 | 0 | 0 | 8 | 0 |
 | 5. Polish | 6 | 0 | 0 | 6 | 0 |
 | 6. Critical | 7 | 0 | 0 | 7 | 0 |
-| 7. Integration | 4 | 1 | 0 | 3 | 0 |
-| **Total** | **41** | **1** | **0** | **40** | **0** |
+| 7. Integration | 4 | 0 | 0 | 4 | 0 |
+| **Total** | **41** | **0** | **0** | **41** | **0** |
 
 ---
 

@@ -56,6 +56,7 @@ base64 = "0.22"
 shellexpand = "3"
 notify = { version = "7", features = ["macos_kqueue"] }
 ignore = "0.4"
+mimalloc = "0.1"
 
 [dev-dependencies]
 tokio-test = "0.4"

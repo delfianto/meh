@@ -31,6 +31,11 @@ impl ToolExecutor {
         Self { registry }
     }
 
+    /// Get a reference to the underlying registry.
+    pub fn registry(&self) -> &ToolRegistry {
+        &self.registry
+    }
+
     /// Execute a tool by name with the given arguments.
     pub async fn execute(
         &self,
