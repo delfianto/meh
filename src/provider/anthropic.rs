@@ -48,6 +48,9 @@ impl AnthropicProvider {
                 supports_images: true,
                 input_price_per_mtok: 3.0,
                 output_price_per_mtok: 15.0,
+                cache_read_price_per_mtok: Some(0.30),
+                cache_write_price_per_mtok: Some(3.75),
+                thinking_price_per_mtok: None,
             },
             cancel: CancellationToken::new(),
         })

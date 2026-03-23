@@ -359,6 +359,9 @@ fn openai_model_info(model_id: &str) -> ModelInfo {
             supports_images: true,
             input_price_per_mtok: 2.0,
             output_price_per_mtok: 8.0,
+            cache_read_price_per_mtok: None,
+            cache_write_price_per_mtok: None,
+            thinking_price_per_mtok: None,
         },
         "gpt-4.1-mini" => ModelInfo {
             id: "gpt-4.1-mini".into(),
@@ -371,6 +374,9 @@ fn openai_model_info(model_id: &str) -> ModelInfo {
             supports_images: true,
             input_price_per_mtok: 0.4,
             output_price_per_mtok: 1.6,
+            cache_read_price_per_mtok: None,
+            cache_write_price_per_mtok: None,
+            thinking_price_per_mtok: None,
         },
         "gpt-4o" => ModelInfo {
             id: "gpt-4o".into(),
@@ -383,6 +389,9 @@ fn openai_model_info(model_id: &str) -> ModelInfo {
             supports_images: true,
             input_price_per_mtok: 2.5,
             output_price_per_mtok: 10.0,
+            cache_read_price_per_mtok: None,
+            cache_write_price_per_mtok: None,
+            thinking_price_per_mtok: None,
         },
         "o3" => ModelInfo {
             id: "o3".into(),
@@ -395,6 +404,9 @@ fn openai_model_info(model_id: &str) -> ModelInfo {
             supports_images: true,
             input_price_per_mtok: 2.0,
             output_price_per_mtok: 8.0,
+            cache_read_price_per_mtok: None,
+            cache_write_price_per_mtok: None,
+            thinking_price_per_mtok: None,
         },
         "o3-mini" => ModelInfo {
             id: "o3-mini".into(),
@@ -407,6 +419,9 @@ fn openai_model_info(model_id: &str) -> ModelInfo {
             supports_images: false,
             input_price_per_mtok: 1.1,
             output_price_per_mtok: 4.4,
+            cache_read_price_per_mtok: None,
+            cache_write_price_per_mtok: None,
+            thinking_price_per_mtok: None,
         },
         other => ModelInfo {
             id: other.into(),
@@ -419,6 +434,9 @@ fn openai_model_info(model_id: &str) -> ModelInfo {
             supports_images: false,
             input_price_per_mtok: 2.0,
             output_price_per_mtok: 8.0,
+            cache_read_price_per_mtok: None,
+            cache_write_price_per_mtok: None,
+            thinking_price_per_mtok: None,
         },
     }
 }
