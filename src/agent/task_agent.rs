@@ -126,7 +126,7 @@ impl TaskAgent {
                 }
             };
 
-            let mut assistant_text = String::new();
+            let mut assistant_text = String::with_capacity(4096);
             let mut assistant_content_blocks: Vec<ContentBlock> = Vec::new();
             let mut pending_tool_calls: Vec<(String, String, serde_json::Value)> = Vec::new();
 

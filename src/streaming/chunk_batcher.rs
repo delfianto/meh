@@ -17,7 +17,7 @@ impl ChunkBatcher {
     /// Creates a new batcher with the given flush interval (16ms ≈ 60fps is a good default).
     pub fn new(flush_interval: Duration) -> Self {
         Self {
-            buffer: String::new(),
+            buffer: String::with_capacity(1024),
             last_flush: Instant::now(),
             flush_interval,
         }
