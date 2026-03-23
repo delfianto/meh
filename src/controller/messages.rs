@@ -36,6 +36,11 @@ pub enum ControllerMessage {
     TaskComplete(TaskResult),
     /// Agent encountered an error.
     TaskError(String),
+
+    /// Config file changed on disk — reload it.
+    ConfigReload,
+    /// MCP settings file changed on disk — reload servers.
+    McpReload,
 }
 
 /// A tool call that needs approval and execution.

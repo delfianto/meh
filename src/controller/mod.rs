@@ -216,6 +216,21 @@ impl Controller {
                     context_window: None,
                 });
             }
+            ControllerMessage::ConfigReload => match self.state.reload().await {
+                Ok(()) => {
+                    tracing::info!("Config reloaded successfully");
+                    let _ = self.ui_tx.send(UiUpdate::AppendMessage {
+                        role: crate::tui::chat_view::ChatRole::System,
+                        content: "Config reloaded.".to_string(),
+                    });
+                }
+                Err(e) => {
+                    tracing::warn!(error = %e, "Failed to reload config");
+                }
+            },
+            ControllerMessage::McpReload => {
+                tracing::info!("MCP settings reload requested");
+            }
         }
     }
 
