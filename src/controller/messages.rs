@@ -90,6 +90,8 @@ pub enum UiUpdate {
         cost: Option<f64>,
         is_streaming: Option<bool>,
         is_yolo: Option<bool>,
+        context_tokens: Option<u64>,
+        context_window: Option<u32>,
     },
     /// Show thinking/reasoning content.
     ThinkingContent { delta: String },

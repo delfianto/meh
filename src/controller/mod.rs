@@ -121,6 +121,8 @@ impl Controller {
                     cost: None,
                     is_streaming: None,
                     is_yolo: Some(is_yolo),
+                    context_tokens: None,
+                    context_window: None,
                 });
             }
             ControllerMessage::SwitchMode(mode) => {
@@ -135,6 +137,8 @@ impl Controller {
                     cost: None,
                     is_streaming: None,
                     is_yolo: None,
+                    context_tokens: None,
+                    context_window: None,
                 });
             }
             ControllerMessage::ApprovalResponse {
@@ -167,6 +171,8 @@ impl Controller {
                     cost: Some(result.total_cost),
                     is_streaming: Some(false),
                     is_yolo: None,
+                    context_tokens: None,
+                    context_window: None,
                 });
             }
             ControllerMessage::TaskError(error) => {
@@ -181,6 +187,8 @@ impl Controller {
                     cost: None,
                     is_streaming: Some(false),
                     is_yolo: None,
+                    context_tokens: None,
+                    context_window: None,
                 });
             }
         }
@@ -196,6 +204,8 @@ impl Controller {
             cost: None,
             is_streaming: Some(true),
             is_yolo: None,
+            context_tokens: None,
+            context_window: None,
         });
 
         let api_key = self.state.resolve_api_key("anthropic").await;
@@ -268,6 +278,8 @@ impl Controller {
                     cost: usage.total_cost,
                     is_streaming: None,
                     is_yolo: None,
+                    context_tokens: Some(usage.input_tokens),
+                    context_window: None,
                 });
             }
             _ => {}
