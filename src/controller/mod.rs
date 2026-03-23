@@ -357,7 +357,92 @@ impl Controller {
             ControllerMessage::SlashCommand(cmd, _args) => {
                 self.handle_slash_command(cmd);
             }
+            ControllerMessage::SettingsChange(change) => {
+                self.apply_settings_change(change).await;
+            }
         }
+    }
+
+    /// Apply a settings change from the settings UI.
+    async fn apply_settings_change(&self, change: crate::tui::settings_view::SettingsChange) {
+        let key = change.key.clone();
+        let value = change.value.clone();
+
+        let result = self
+            .state
+            .update_config(|config| match key.as_str() {
+                "provider.default" => config.provider.default.clone_from(&value),
+                "provider.anthropic.api_key" => {
+                    if value.starts_with('$') {
+                        config.provider.anthropic.api_key_env =
+                            Some(value.trim_start_matches('$').to_string());
+                        config.provider.anthropic.api_key = None;
+                    } else {
+                        config.provider.anthropic.api_key = Some(value.clone());
+                    }
+                }
+                "provider.anthropic.model" => {
+                    config.provider.anthropic.model = Some(value.clone());
+                }
+                "provider.openai.api_key" => {
+                    if value.starts_with('$') {
+                        config.provider.openai.api_key_env =
+                            Some(value.trim_start_matches('$').to_string());
+                        config.provider.openai.api_key = None;
+                    } else {
+                        config.provider.openai.api_key = Some(value.clone());
+                    }
+                }
+                "provider.gemini.api_key" => {
+                    if value.starts_with('$') {
+                        config.provider.gemini.api_key_env =
+                            Some(value.trim_start_matches('$').to_string());
+                        config.provider.gemini.api_key = None;
+                    } else {
+                        config.provider.gemini.api_key = Some(value.clone());
+                    }
+                }
+                "provider.openrouter.api_key" => {
+                    if value.starts_with('$') {
+                        config.provider.openrouter.api_key_env =
+                            Some(value.trim_start_matches('$').to_string());
+                        config.provider.openrouter.api_key = None;
+                    } else {
+                        config.provider.openrouter.api_key = Some(value.clone());
+                    }
+                }
+                "permissions.mode" => config.permissions.mode.clone_from(&value),
+                "permissions.auto_approve.read_files" => {
+                    config.permissions.auto_approve.read_files = value == "true";
+                }
+                "permissions.auto_approve.edit_files" => {
+                    config.permissions.auto_approve.edit_files = value == "true";
+                }
+                "permissions.auto_approve.execute_safe_commands" => {
+                    config.permissions.auto_approve.execute_safe_commands = value == "true";
+                }
+                "permissions.auto_approve.execute_all_commands" => {
+                    config.permissions.auto_approve.execute_all_commands = value == "true";
+                }
+                "mode.default" => config.mode.default.clone_from(&value),
+                "mode.strict_plan" => config.mode.strict_plan = value == "true",
+                _ => tracing::warn!(key, "Unknown settings key"),
+            })
+            .await;
+
+        if let Err(e) = result {
+            tracing::error!(error = %e, "Failed to apply settings change");
+            return;
+        }
+
+        if let Err(e) = self.state.persist().await {
+            tracing::error!(error = %e, "Failed to persist settings");
+        }
+
+        self.send_ui(UiUpdate::AppendMessage {
+            role: crate::tui::chat_view::ChatRole::System,
+            content: format!("Setting updated: {}", change.key),
+        });
     }
 
     /// Handles a parsed slash command.
@@ -390,10 +475,7 @@ impl Controller {
                 });
             }
             SlashCommand::Settings => {
-                self.send_ui(UiUpdate::AppendMessage {
-                    role: crate::tui::chat_view::ChatRole::System,
-                    content: "Settings: edit ~/.config/meh/config.toml".to_string(),
-                });
+                self.send_ui(UiUpdate::ShowSettings);
             }
             SlashCommand::NewTask => {
                 if let Some(tx) = &self.agent_tx {
