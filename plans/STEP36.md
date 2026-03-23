@@ -289,14 +289,14 @@ mod cancellation_tests {
 ```
 
 ## Acceptance Criteria
-- [ ] Ctrl+C during streaming cancels the current API call
-- [ ] Provider abort drops the HTTP connection via CancellationToken
-- [ ] Partial assistant text preserved in chat history
-- [ ] TUI shows "Task cancelled by user" message
-- [ ] Status bar streaming indicator cleared
-- [ ] Double Ctrl+C within 2s force-quits the application
-- [ ] Ctrl+C when idle quits the app
-- [ ] Pending tool calls discarded on cancellation
-- [ ] CancellationToken reset between tasks
-- [ ] `cargo clippy -- -D warnings` passes
-- [ ] All tests pass
+- [x] Ctrl+C during streaming cancels the current API call
+- [x] Provider abort drops the HTTP connection via CancellationToken
+- [x] Partial assistant text preserved in chat history
+- [x] TUI shows "Task cancelled by user" message
+- [x] Status bar streaming indicator cleared
+- [x] Double Ctrl+C within 2s force-quits the application
+- [x] Ctrl+C when idle quits the app
+- [x] Pending tool calls discarded on cancellation
+- [x] CancellationToken reset between tasks
+- [x] `cargo clippy -- -D warnings` passes
+- [x] All tests pass

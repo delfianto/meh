@@ -21,6 +21,7 @@ use crate::state::StateManager;
 use crate::streaming::ui_batcher::UiBatcher;
 use messages::{ControllerMessage, ToolCallResult, UiUpdate};
 use std::time::Duration;
+use task::TaskCancellation;
 use tokio::sync::mpsc;
 
 /// The Controller is the central message router.
@@ -45,6 +46,8 @@ pub struct Controller {
     running: bool,
     /// Batches rapid stream updates for smooth TUI rendering.
     batcher: UiBatcher,
+    /// Cooperative cancellation with double-cancel detection.
+    cancellation: TaskCancellation,
 }
 
 impl Controller {
@@ -68,6 +71,7 @@ impl Controller {
             permission_mode,
             running: true,
             batcher: UiBatcher::new(60),
+            cancellation: TaskCancellation::new(),
         };
         (ctrl, ctrl_tx, ui_rx)
     }
@@ -121,10 +125,32 @@ impl Controller {
                 self.running = false;
             }
             ControllerMessage::CancelTask => {
+                let is_double = self.cancellation.cancel();
+                if is_double {
+                    tracing::info!("Double cancel detected, force quitting");
+                    let _ = self.ui_tx.send(UiUpdate::Quit);
+                    self.running = false;
+                    return;
+                }
                 tracing::info!("Task cancellation requested");
                 if let Some(tx) = &self.agent_tx {
                     let _ = tx.send(AgentMessage::Cancel);
                 }
+                self.flush_batcher();
+                let _ = self.ui_tx.send(UiUpdate::StreamEnd);
+                let _ = self.ui_tx.send(UiUpdate::AppendMessage {
+                    role: crate::tui::chat_view::ChatRole::System,
+                    content: "Task cancelled by user.".to_string(),
+                });
+                let _ = self.ui_tx.send(UiUpdate::StatusUpdate {
+                    mode: None,
+                    tokens: None,
+                    cost: None,
+                    is_streaming: Some(false),
+                    is_yolo: None,
+                    context_tokens: None,
+                    context_window: None,
+                });
             }
             ControllerMessage::ToggleThinking => {
                 tracing::info!("Toggle thinking visibility");
@@ -348,6 +374,7 @@ impl Controller {
     /// Handles a user message: creates a provider and spawns a `TaskAgent`.
     async fn handle_user_submit(&mut self, text: String) {
         tracing::info!(len = text.len(), "User submitted message");
+        self.cancellation.reset();
 
         let _ = self.ui_tx.send(UiUpdate::StatusUpdate {
             mode: None,
