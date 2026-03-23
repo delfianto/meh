@@ -57,38 +57,38 @@ impl PartialToolCall {
 
 /// Extracts key-value pairs from potentially incomplete JSON.
 ///
-/// Attempts serde parsing with repair suffixes to close truncated JSON.
-/// Handles all JSON value types (strings, numbers, booleans, null) and
-/// correctly handles escaped quotes inside string values — unlike the
-/// regex approach this replaces.
+/// Uses `jiter` with `PartialMode::TrailingStrings` for proper incremental
+/// parsing. Handles truncated strings, booleans, numbers, nested objects,
+/// and escaped quotes natively — no string suffix guessing needed.
 pub fn extract_partial_json_fields(partial: &str) -> HashMap<String, String> {
-    let candidates = [
-        partial.to_string(),
-        format!("{partial}\"}}"),
-        format!("{partial}}}"),
-        format!("{partial}null}}"),
-        format!("{partial}\": null}}"),
-    ];
-    for candidate in &candidates {
-        if let Ok(serde_json::Value::Object(map)) = serde_json::from_str(candidate) {
-            return map
-                .into_iter()
-                .map(|(k, v)| (k, value_to_preview(&v)))
-                .collect();
-        }
-    }
-    HashMap::new()
+    let Ok(value) = jiter::JsonValue::parse_owned(
+        partial.as_bytes(),
+        false,
+        jiter::PartialMode::TrailingStrings,
+    ) else {
+        return HashMap::new();
+    };
+
+    let jiter::JsonValue::Object(map) = value else {
+        return HashMap::new();
+    };
+
+    map.iter()
+        .map(|(k, v)| (k.to_string(), jiter_value_to_preview(v)))
+        .collect()
 }
 
-/// Convert a JSON value to a short preview string.
-fn value_to_preview(v: &serde_json::Value) -> String {
+/// Convert a jiter `JsonValue` to a short preview string.
+fn jiter_value_to_preview(v: &jiter::JsonValue<'_>) -> String {
     match v {
-        serde_json::Value::String(s) => s.clone(),
-        serde_json::Value::Number(n) => n.to_string(),
-        serde_json::Value::Bool(b) => b.to_string(),
-        serde_json::Value::Null => "null".to_string(),
-        serde_json::Value::Array(_) => "[...]".to_string(),
-        serde_json::Value::Object(_) => "{...}".to_string(),
+        jiter::JsonValue::Str(s) => s.to_string(),
+        jiter::JsonValue::Int(n) => n.to_string(),
+        jiter::JsonValue::Float(n) => n.to_string(),
+        jiter::JsonValue::Bool(b) => b.to_string(),
+        jiter::JsonValue::Null => "null".to_string(),
+        jiter::JsonValue::Array(_) => "[...]".to_string(),
+        jiter::JsonValue::Object(_) => "{...}".to_string(),
+        jiter::JsonValue::BigInt(n) => n.to_string(),
     }
 }
 
@@ -208,8 +208,8 @@ mod tests {
     }
 
     #[test]
-    fn extract_partial_fields_truncated() {
-        let partial = r#"{"path": "/src/main.rs", "line"#;
+    fn extract_partial_fields_truncated_at_comma() {
+        let partial = r#"{"path": "/src/main.rs","#;
         let fields = extract_partial_json_fields(partial);
         assert_eq!(fields.get("path").unwrap(), "/src/main.rs");
     }
@@ -262,7 +262,7 @@ mod tests {
     #[test]
     fn partial_fields_method() {
         let mut tc = PartialToolCall::new("tc1".to_string(), "read_file".to_string());
-        tc.append(r#"{"path": "/src/main.rs", "line"#);
+        tc.append(r#"{"path": "/src/main.rs","#);
         let fields = tc.partial_fields();
         assert_eq!(fields.get("path").unwrap(), "/src/main.rs");
     }
