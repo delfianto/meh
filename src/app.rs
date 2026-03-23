@@ -226,7 +226,7 @@ fn run_tui(
                     if key.code == KeyCode::Char('c')
                         && key.modifiers.contains(KeyModifiers::CONTROL)
                     {
-                        let _ = ctrl_tx.send(ControllerMessage::Quit);
+                        let _ = ctrl_tx.send(ControllerMessage::CancelTask);
                         continue;
                     }
                     if key.code == KeyCode::Char('y')
