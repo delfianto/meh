@@ -181,14 +181,8 @@ impl PermissionController {
     }
 
     /// Check if a category is auto-approved based on the rules.
-    const fn auto_approve_category(&self, category: ToolCategory) -> bool {
-        match category {
-            ToolCategory::ReadOnly => self.auto_approve.read_files,
-            ToolCategory::FileWrite => self.auto_approve.edit_files,
-            ToolCategory::Command => self.auto_approve.execute_all_commands,
-            ToolCategory::Mcp => self.auto_approve.mcp_tools,
-            ToolCategory::Informational => true,
-        }
+    fn auto_approve_category(&self, category: ToolCategory) -> bool {
+        self.auto_approve.should_approve(category, None)
     }
 }
 

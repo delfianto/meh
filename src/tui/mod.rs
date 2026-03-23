@@ -107,6 +107,7 @@ mod tests {
             total_tokens: 0,
             total_cost: 0.0,
             is_streaming: false,
+            is_yolo: false,
         }
     }
 

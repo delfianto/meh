@@ -11,6 +11,7 @@ pub struct StatusBarState {
     pub total_tokens: u64,
     pub total_cost: f64,
     pub is_streaming: bool,
+    pub is_yolo: bool,
 }
 
 /// Render the status bar into the given area.
@@ -32,9 +33,20 @@ pub fn render_status_bar(frame: &mut Frame, area: Rect, state: &StatusBarState) 
 
     let streaming_indicator = if state.is_streaming { " ⟳" } else { "" };
 
-    let line = Line::from(vec![
+    let mut spans = vec![
         Span::styled(format!(" {} ", state.mode), mode_style),
         Span::raw(" "),
+    ];
+
+    if state.is_yolo {
+        spans.push(Span::styled(
+            " YOLO ",
+            Style::default().fg(Color::White).bg(Color::Red).bold(),
+        ));
+        spans.push(Span::raw(" "));
+    }
+
+    spans.extend(vec![
         Span::styled(
             format!("{}/{}", state.provider, state.model_name),
             Style::default().fg(Color::Gray),
@@ -54,6 +66,8 @@ pub fn render_status_bar(frame: &mut Frame, area: Rect, state: &StatusBarState) 
             Style::default().fg(Color::Cyan),
         ),
     ]);
+
+    let line = Line::from(spans);
 
     let paragraph = Paragraph::new(line).style(Style::default().bg(Color::Rgb(30, 30, 30)));
     frame.render_widget(paragraph, area);
