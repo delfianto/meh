@@ -21,6 +21,8 @@ pub enum ControllerMessage {
     SwitchMode(Mode),
     /// User toggled thinking visibility.
     ToggleThinking,
+    /// User toggled YOLO mode.
+    ToggleYolo,
     /// User requested quit.
     Quit,
 
@@ -87,6 +89,7 @@ pub enum UiUpdate {
         tokens: Option<u64>,
         cost: Option<f64>,
         is_streaming: Option<bool>,
+        is_yolo: Option<bool>,
     },
     /// Show thinking/reasoning content.
     ThinkingContent { delta: String },

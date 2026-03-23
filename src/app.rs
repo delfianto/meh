@@ -3,6 +3,8 @@
 use crate::Cli;
 use crate::controller::Controller;
 use crate::controller::messages::{ControllerMessage, UiUpdate};
+use crate::permission::PermissionMode;
+use crate::permission::yolo::is_yolo_mode;
 use crate::state::StateManager;
 use crate::tui::{
     self,
@@ -34,14 +36,25 @@ impl App {
     pub async fn run(self) -> anyhow::Result<()> {
         tracing::info!("meh starting up");
 
-        let (controller, ctrl_tx, ui_rx) = Controller::new(self.state.clone());
+        let config = self.state.config().await;
+        let yolo = is_yolo_mode(&config.permissions, self.cli.yolo);
+        let permission_mode = if yolo {
+            PermissionMode::Yolo
+        } else {
+            match config.permissions.mode.as_str() {
+                "auto" => PermissionMode::Auto,
+                _ => PermissionMode::Ask,
+            }
+        };
+
+        let (controller, ctrl_tx, ui_rx) = Controller::new(self.state.clone(), permission_mode);
 
         let controller_handle = tokio::spawn(controller.run());
 
-        let config = self.state.config().await;
         let initial_prompt = self.cli.prompt.clone();
+        let default_provider = config.provider.default.clone();
         let tui_result = tokio::task::spawn_blocking(move || {
-            run_tui(&ctrl_tx, ui_rx, &config.provider.default, initial_prompt)
+            run_tui(&ctrl_tx, ui_rx, &default_provider, initial_prompt, yolo)
         })
         .await?;
 
@@ -103,6 +116,7 @@ fn apply_ui_update(
             tokens,
             cost,
             is_streaming,
+            is_yolo,
         } => {
             if let Some(m) = mode {
                 status.mode = m;
@@ -115,6 +129,9 @@ fn apply_ui_update(
             }
             if let Some(s) = is_streaming {
                 status.is_streaming = s;
+            }
+            if let Some(y) = is_yolo {
+                status.is_yolo = y;
             }
         }
         UiUpdate::ToolApproval { .. } => {}
@@ -129,6 +146,7 @@ fn run_tui(
     mut ui_rx: mpsc::UnboundedReceiver<UiUpdate>,
     default_provider: &str,
     initial_prompt: Option<String>,
+    yolo: bool,
 ) -> anyhow::Result<()> {
     let mut tui = tui::Tui::new()?;
     let mut chat_state = ChatViewState::new();
@@ -140,6 +158,7 @@ fn run_tui(
         total_tokens: 0,
         total_cost: 0.0,
         is_streaming: false,
+        is_yolo: yolo,
     };
     let mut stream_state = StreamState {
         is_streaming: false,
@@ -184,6 +203,12 @@ fn run_tui(
                         && key.modifiers.contains(KeyModifiers::CONTROL)
                     {
                         let _ = ctrl_tx.send(ControllerMessage::Quit);
+                        continue;
+                    }
+                    if key.code == KeyCode::Char('y')
+                        && key.modifiers.contains(KeyModifiers::CONTROL)
+                    {
+                        let _ = ctrl_tx.send(ControllerMessage::ToggleYolo);
                         continue;
                     }
                     if let Some(text) = input.handle_key(key) {

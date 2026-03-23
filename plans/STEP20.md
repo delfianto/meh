@@ -331,12 +331,12 @@ mod permission_integration_tests {
 ```
 
 ## Acceptance Criteria
-- [ ] --yolo CLI flag enables YOLO mode
-- [ ] Config `permissions.mode = "yolo"` enables YOLO mode
-- [ ] YOLO mode approves all tool calls without prompting
-- [ ] Auto-approve rules work per category
-- [ ] Safe command detection for execute_safe_commands
-- [ ] Ctrl+Y toggles YOLO at runtime
-- [ ] Status bar shows "YOLO" badge when active
-- [ ] `cargo clippy -- -D warnings` passes
-- [ ] All tests pass (15+ cases)
+- [x] --yolo CLI flag enables YOLO mode
+- [x] Config `permissions.mode = "yolo"` enables YOLO mode
+- [x] YOLO mode approves all tool calls without prompting
+- [x] Auto-approve rules work per category
+- [x] Safe command detection for execute_safe_commands
+- [x] Ctrl+Y toggles YOLO at runtime
+- [x] Status bar shows "YOLO" badge when active
+- [x] `cargo clippy -- -D warnings` passes
+- [x] All tests pass (15+ cases)

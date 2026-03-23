@@ -15,6 +15,7 @@ pub mod messages;
 pub mod task;
 
 use crate::agent::{AgentMessage, TaskAgent};
+use crate::permission::PermissionMode;
 use crate::provider::{self, ModelConfig, StreamChunk};
 use crate::state::StateManager;
 use messages::{ControllerMessage, ToolCallResult, UiUpdate};
@@ -36,6 +37,8 @@ pub struct Controller {
     agent_tx: Option<mpsc::UnboundedSender<AgentMessage>>,
     /// Application state.
     state: StateManager,
+    /// Current permission mode (tracked for YOLO toggle).
+    permission_mode: PermissionMode,
     /// Whether the controller is running.
     running: bool,
 }
@@ -44,6 +47,7 @@ impl Controller {
     /// Creates a new Controller and returns `(controller, ctrl_tx, ui_rx)`.
     pub fn new(
         state: StateManager,
+        permission_mode: PermissionMode,
     ) -> (
         Self,
         mpsc::UnboundedSender<ControllerMessage>,
@@ -57,6 +61,7 @@ impl Controller {
             ctrl_tx: ctrl_tx.clone(),
             agent_tx: None,
             state,
+            permission_mode,
             running: true,
         };
         (ctrl, ctrl_tx, ui_rx)
@@ -78,6 +83,7 @@ impl Controller {
     }
 
     /// Dispatches a single message to the appropriate handler.
+    #[allow(clippy::too_many_lines)]
     async fn handle_message(&mut self, msg: ControllerMessage) {
         match msg {
             ControllerMessage::UserSubmit { text, .. } => {
@@ -100,6 +106,23 @@ impl Controller {
             ControllerMessage::ToggleThinking => {
                 tracing::info!("Toggle thinking visibility");
             }
+            ControllerMessage::ToggleYolo => {
+                let new_mode = if self.permission_mode == PermissionMode::Yolo {
+                    PermissionMode::Ask
+                } else {
+                    PermissionMode::Yolo
+                };
+                self.permission_mode = new_mode;
+                let is_yolo = new_mode == PermissionMode::Yolo;
+                tracing::info!(?new_mode, "Permission mode toggled");
+                let _ = self.ui_tx.send(UiUpdate::StatusUpdate {
+                    mode: None,
+                    tokens: None,
+                    cost: None,
+                    is_streaming: None,
+                    is_yolo: Some(is_yolo),
+                });
+            }
             ControllerMessage::SwitchMode(mode) => {
                 tracing::info!(?mode, "Mode switch requested");
                 let mode_str = match mode {
@@ -111,6 +134,7 @@ impl Controller {
                     tokens: None,
                     cost: None,
                     is_streaming: None,
+                    is_yolo: None,
                 });
             }
             ControllerMessage::ApprovalResponse {
@@ -142,6 +166,7 @@ impl Controller {
                     tokens: Some(result.total_tokens),
                     cost: Some(result.total_cost),
                     is_streaming: Some(false),
+                    is_yolo: None,
                 });
             }
             ControllerMessage::TaskError(error) => {
@@ -155,6 +180,7 @@ impl Controller {
                     tokens: None,
                     cost: None,
                     is_streaming: Some(false),
+                    is_yolo: None,
                 });
             }
         }
@@ -169,6 +195,7 @@ impl Controller {
             tokens: None,
             cost: None,
             is_streaming: Some(true),
+            is_yolo: None,
         });
 
         let api_key = self.state.resolve_api_key("anthropic").await;
@@ -240,6 +267,7 @@ impl Controller {
                     tokens: Some(usage.input_tokens + usage.output_tokens),
                     cost: usage.total_cost,
                     is_streaming: None,
+                    is_yolo: None,
                 });
             }
             _ => {}
@@ -266,6 +294,7 @@ impl Controller {
 mod controller_tests {
     use super::Controller;
     use super::messages::{ControllerMessage, TaskResult, UiUpdate};
+    use crate::permission::PermissionMode;
     use crate::state::StateManager;
     use crate::tui::chat_view::ChatRole;
 
@@ -277,7 +306,7 @@ mod controller_tests {
         let dir = tempfile::TempDir::new().unwrap();
         let path = dir.path().join("config.toml");
         let state = StateManager::new(Some(path)).await.unwrap();
-        Controller::new(state)
+        Controller::new(state, PermissionMode::Ask)
     }
 
     #[tokio::test]
@@ -435,6 +464,36 @@ mod controller_tests {
                 assert_eq!(delta, "reasoning...");
             }
             other => panic!("Expected ThinkingContent, got {other:?}"),
+        }
+
+        ctrl_tx.send(ControllerMessage::Quit).unwrap();
+        let _ = ui_rx.recv().await;
+        handle.await.unwrap().unwrap();
+    }
+
+    #[tokio::test]
+    async fn controller_toggle_yolo() {
+        let (controller, ctrl_tx, mut ui_rx) = make_controller().await;
+        let handle = tokio::spawn(controller.run());
+
+        ctrl_tx.send(ControllerMessage::ToggleYolo).unwrap();
+
+        let update = ui_rx.recv().await.unwrap();
+        match update {
+            UiUpdate::StatusUpdate { is_yolo, .. } => {
+                assert_eq!(is_yolo, Some(true));
+            }
+            other => panic!("Expected StatusUpdate, got {other:?}"),
+        }
+
+        ctrl_tx.send(ControllerMessage::ToggleYolo).unwrap();
+
+        let update = ui_rx.recv().await.unwrap();
+        match update {
+            UiUpdate::StatusUpdate { is_yolo, .. } => {
+                assert_eq!(is_yolo, Some(false));
+            }
+            other => panic!("Expected StatusUpdate, got {other:?}"),
         }
 
         ctrl_tx.send(ControllerMessage::Quit).unwrap();
