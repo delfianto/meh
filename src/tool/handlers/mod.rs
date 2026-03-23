@@ -6,16 +6,16 @@
 //! and ignore rules.
 //!
 //! ```text
-//!   ┌──────────────────────────────────────────────────────┐
-//!   │                    handlers/                          │
-//!   │                                                      │
-//!   │  ReadOnly:        read_file, list_files, search_files│
-//!   │  FileWrite:       write_file, apply_patch            │
-//!   │  Command:         execute_command                    │
-//!   │  Informational:   ask_followup, attempt_completion,  │
-//!   │                   plan_mode_respond                  │
-//!   │  MCP:             mcp_tool (proxy to MCP servers)    │
-//!   └──────────────────────────────────────────────────────┘
+//!   ┌─────────────────────────────────────────────────────────┐
+//!   │                     handlers/                           │
+//!   │                                                         │
+//!   │  ReadOnly:        read_file, list_files, search_files   │
+//!   │  FileWrite:       write_file, apply_patch               │
+//!   │  Command:         execute_command                       │
+//!   │  Informational:   ask_followup, attempt_completion,     │
+//!   │                   plan_mode_respond                     │
+//!   │  MCP:             mcp_tool (proxy to MCP servers)       │
+//!   └─────────────────────────────────────────────────────────┘
 //! ```
 
 pub mod apply_patch;

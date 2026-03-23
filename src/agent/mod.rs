@@ -5,30 +5,30 @@
 //! calls from the stream, and communicating results back to the controller.
 //!
 //! ```text
-//!                    ┌──────────────────────────┐
-//!                    │       Controller         │
-//!                    │  (ControllerMessage rx)  │
-//!                    └────┬──────────────▲──────┘
-//!      AgentMessage       │              │  ControllerMessage
-//!      (tool results,     │              │  (stream chunks,
-//!       cancel, mode)     ▼              │   tool requests)
-//!                    ┌────────────────────┐
-//!                    │     TaskAgent      │
-//!                    │  ┌──────────────┐  │
-//!                    │  │ Provider API │  │
-//!                    │  │   (stream)   │  │
-//!                    │  └──────────────┘  │
-//!                    │  ┌──────────────┐  │
-//!                    │  │  Messages[]  │  │
-//!                    │  │  (context)   │  │
-//!                    │  └──────────────┘  │
-//!                    └────────┬───────────┘
-//!                             │ spawn
-//!                    ┌────────▼───────────┐
-//!                    │     SubAgent       │
-//!                    │  (own context,     │
-//!                    │   shared perms)    │
-//!                    └────────────────────┘
+//!                  ┌──────────────────────────┐
+//!                  │       Controller         │
+//!                  │  (ControllerMessage rx)  │
+//!                  └──┬──────────────▲───────┘
+//!    AgentMessage     │              │  ControllerMessage
+//!    (tool results,   │              │  (stream chunks,
+//!     cancel, mode)   ▼              │   tool requests)
+//!                  ┌─────────────────────┐
+//!                  │      TaskAgent      │
+//!                  │  ┌───────────────┐  │
+//!                  │  │ Provider API  │  │
+//!                  │  │   (stream)    │  │
+//!                  │  └───────────────┘  │
+//!                  │  ┌───────────────┐  │
+//!                  │  │  Messages[]   │  │
+//!                  │  │   (context)   │  │
+//!                  │  └───────────────┘  │
+//!                  └────────┬────────────┘
+//!                           │ spawn
+//!                  ┌────────▼────────────┐
+//!                  │      SubAgent       │
+//!                  │  (own context,      │
+//!                  │   shared perms)     │
+//!                  └─────────────────────┘
 //! ```
 //!
 //! The `TaskAgent` owns the main conversation loop: call the provider,
