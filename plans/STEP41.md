@@ -14,6 +14,7 @@ Fix 4 confirmed issues from the second Gemini 3.1 Pro audit. The permission bypa
 | 2 | **HIGH** | All channels unbounded — no backpressure, OOM risk | Throughout |
 | 3 | **MEDIUM** | Working directory not tracked per-task — `cd` has no effect | `controller/mod.rs`, `state/task_state.rs` |
 | 4 | **MEDIUM** | TUI panic in draw loop crashes app — no `catch_unwind` | `app.rs` |
+| 5 | **LOW** | System allocator suboptimal for many small short-lived String allocs | `main.rs`, `Cargo.toml` |
 
 Finding #3 from the audit (JSON parsing) was already fixed in STEP 40 and confirmed as good.
 
@@ -207,6 +208,25 @@ This ensures:
 - Panic is converted to an `anyhow::Error` instead of crashing
 - The error message is preserved for logging
 
+### 41.5 Switch to mimalloc global allocator (LOW)
+
+**Problem**: The default system allocator is adequate but suboptimal for this app's allocation pattern: many small, short-lived `String` allocations churned across multiple threads (tokio workers + TUI blocking thread).
+
+**Fix**: Add `mimalloc` as the global allocator. It provides 10-20% faster small allocations, better multi-threaded scaling via thread-local heaps, and lower fragmentation for alloc/dealloc churn.
+
+```toml
+# Cargo.toml [dependencies]
+mimalloc = "0.1"
+```
+
+```rust
+// main.rs — before anything else
+#[global_allocator]
+static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
+```
+
+Chosen over `jemalloc` due to better macOS ARM support and simpler integration.
+
 ---
 
 ## Tests
@@ -270,5 +290,6 @@ mod cwd_tests {
 - [ ] `catch_unwind` around TUI draw loop; terminal always restored
 - [ ] Panic converted to `anyhow::Error`, not process termination
 - [ ] All existing tests pass (no regressions)
+- [ ] mimalloc set as global allocator
 - [ ] `cargo clippy -- -D warnings` passes
 - [ ] `cargo test` passes
