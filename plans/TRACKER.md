@@ -67,7 +67,7 @@
 |------|------|-------------|--------|-------|
 | 31 | [STEP31.md](STEP31.md) | Context window management + summarization | `[x]` | PR #28 |
 | 32 | [STEP32.md](STEP32.md) | .mehignore path protection | `[x]` | PR #29 |
-| 33 | [STEP33.md](STEP33.md) | Environment detection (OS, shell, workspace) | `[ ]` | Depends on: 01 |
+| 33 | [STEP33.md](STEP33.md) | Environment detection (OS, shell, workspace) | `[x]` | PR #30 |
 | 34 | [STEP34.md](STEP34.md) | User rules system (.mehrules) | `[ ]` | Depends on: 33, 29 |
 | 35 | [STEP35.md](STEP35.md) | Slash commands (/help, /clear, /compact, etc.) | `[ ]` | Depends on: 03, 04 |
 | 36 | [STEP36.md](STEP36.md) | Graceful cancellation (Ctrl+C mid-stream) | `[ ]` | Depends on: 07, 05 |
@@ -82,8 +82,8 @@
 | 3. Tools | 6 | 0 | 0 | 6 | 0 |
 | 4. Advanced | 8 | 0 | 0 | 8 | 0 |
 | 5. Polish | 6 | 0 | 0 | 6 | 0 |
-| 6. Critical | 7 | 5 | 0 | 2 | 0 |
-| **Total** | **37** | **5** | **0** | **32** | **0** |
+| 6. Critical | 7 | 4 | 0 | 3 | 0 |
+| **Total** | **37** | **4** | **0** | **33** | **0** |
 
 ---
 
