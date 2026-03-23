@@ -180,18 +180,61 @@ if let Some(event) = poll_event(poll_timeout) { ... }
 
 This is a minimal, safe change that reduces idle CPU by ~6x while maintaining smooth streaming.
 
-### 40.5 Document zero-copy compromise
+### 40.5 Apply pragmatic string optimizations and document zero-copy compromise
 
-**Problem**: CLAUDE.md states "Zero-copy where possible" but `StreamChunk`, messages, and UI updates all use heap-allocated `String`. Converting to `Cow<'_, str>` or `bytes::Bytes` across async channel boundaries would require major refactoring with lifetime gymnastics.
+**Problem**: CLAUDE.md states "Zero-copy where possible" but `StreamChunk`, messages, and UI updates all use heap-allocated `String`. A full `Cow`/`Arc`/`Bytes` refactor is not worth the churn, but targeted improvements reduce allocations in the hot paths.
 
-**Fix**: Add a documented acknowledgement in the module docs and a pragmatic note in CLAUDE.md. This is a known trade-off, not a bug — `String` across `mpsc` channels is the standard Rust pattern for owned async message passing.
+**String strategy by layer** (applied where the change is safe and meaningful):
 
-Update `src/provider/mod.rs` module doc:
+```
+Layer              Type                        Rationale
+──────────────────────────────────────────────────────────────────────
+HTTP body          bytes::Bytes                reqwest already provides this
+SSE parse          &str slices                 Borrow from Bytes, no alloc
+StreamChunk        String                      Must be Send, consumed once — keep as-is
+Accumulation       String::with_capacity(4096) Avoid realloc cascades during streaming
+Stored messages    String (Box<str> aspirational) Write-once; Box<str> saves capacity overhead
+Shared data        String (Arc<str> aspirational) History + TUI share — Arc avoids clone
+Function params    &str                        Borrow, never own unless needed
+Short IDs/names    String (fine)               <30 bytes, negligible cost
+TUI rendering      &str                        Ratatui borrows, zero-copy naturally
+Serialization      &str via serde              serde borrows, no copies
+```
+
+**Changes to make now** (safe, no ripple effects):
+
+1. **`String::with_capacity()`** in accumulation buffers:
+   - `TaskAgent::run()` — `assistant_text` should start with `String::with_capacity(4096)`
+   - `ChunkBatcher::new()` — pre-allocate buffer with `String::with_capacity(1024)`
+   - `UiBatcher::new()` — pre-allocate text/thinking buffers
+
+2. **`&str` params** — audit functions that take `String` but only read:
+   - `generate_title(first_message: &str)` — already correct
+   - `count_tokens(text: &str)` — already correct
+   - `format_tokens`, `format_cost` — already take primitive types
+
+3. **Avoid `.to_string()` where `format!` already allocates**:
+   - Scan for `format!("...", x.to_string())` patterns and simplify
+
+**Changes NOT worth making now** (high churn, low benefit):
+
+- `StreamChunk::Text { delta: String }` → keep as-is (consumed once, short-lived)
+- `ContentBlock::Text(String)` → `Arc<str>` would ripple into 30+ files
+- `PersistedMessage` fields → `Box<str>` would break serde `Deserialize` derive
+
+**Documentation update** in `src/provider/mod.rs` and `CLAUDE.md`:
+
 ```rust
 //! NOTE: StreamChunk fields use owned `String` rather than `Cow<'_, str>`
-//! or `bytes::Bytes`. While the architecture doc calls for zero-copy where
-//! possible, owned types are required for `Send + 'static` across async
-//! channel boundaries. This is the standard Rust pattern for message passing.
+//! or `bytes::Bytes`. Owned types are required for `Send + 'static` across
+//! async channel boundaries. This is idiomatic Rust for message passing.
+//! Accumulation buffers use `with_capacity()` to minimize reallocations.
+```
+
+Update CLAUDE.md principle to:
+```
+1. **Minimize allocations** — `&str` for function params, `String::with_capacity()`
+   for accumulation, owned types at channel boundaries (required for `Send + 'static`).
 ```
 
 ---
@@ -246,7 +289,8 @@ mod json_preview_tests {
 - [ ] Regex removed from tool_parser.rs
 - [ ] Tool executor wired in controller — tools actually execute
 - [ ] TUI idle CPU reduced (longer poll timeout when not streaming)
-- [ ] Zero-copy trade-off documented in provider module
+- [ ] Accumulation buffers use `String::with_capacity()` (agent, batcher)
+- [ ] Zero-copy trade-off documented in provider module and CLAUDE.md
 - [ ] All existing tests pass (no regressions)
 - [ ] `cargo clippy -- -D warnings` passes
 - [ ] `cargo test` passes
