@@ -367,9 +367,13 @@ async fn run_tui_async(
                 if dirty {
                     tui.draw(|frame| {
                         if let Some(ref sv) = settings_view {
+                            // Auto-size: rows + tab bar(1) + border(2) + help(1) + separator(1)
+                            #[allow(clippy::cast_possible_truncation)]
+                            let panel_height = (sv.rows.len() as u16).saturating_add(5)
+                                .min(frame.area().height.saturating_sub(8));
                             let chunks = Layout::vertical([
-                                Constraint::Percentage(40),
-                                Constraint::Percentage(60),
+                                Constraint::Min(6),
+                                Constraint::Length(panel_height),
                             ]).split(frame.area());
                             tui::app_layout::render_app_in(
                                 frame, chunks[0], &chat_state, &input, &status,
