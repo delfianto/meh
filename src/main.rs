@@ -1,6 +1,9 @@
 //! Meh — Terminal-based AI coding assistant
 #![allow(dead_code)]
 
+#[global_allocator]
+static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
+
 mod agent;
 mod app;
 mod commands;

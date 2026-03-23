@@ -192,9 +192,12 @@ fn apply_ui_update(
 }
 
 /// The TUI event loop. Runs on a blocking thread.
+///
+/// Wrapped in `catch_unwind` to guarantee terminal restoration on panic.
+#[allow(clippy::too_many_lines)]
 fn run_tui(
     ctrl_tx: &mpsc::UnboundedSender<ControllerMessage>,
-    mut ui_rx: mpsc::UnboundedReceiver<UiUpdate>,
+    mut ui_rx: mpsc::Receiver<UiUpdate>,
     default_provider: &str,
     initial_prompt: Option<String>,
     yolo: bool,
@@ -237,70 +240,87 @@ fn run_tui(
         });
     }
 
-    let mut dirty = true;
+    let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        let mut dirty = true;
 
-    loop {
-        let mut got_update = false;
-        while let Ok(update) = ui_rx.try_recv() {
-            if apply_ui_update(update, &mut chat_state, &mut status, &mut stream_state) {
-                tui.restore()?;
-                return Ok(());
+        loop {
+            let mut got_update = false;
+            while let Ok(update) = ui_rx.try_recv() {
+                if apply_ui_update(update, &mut chat_state, &mut status, &mut stream_state) {
+                    tui.restore()?;
+                    return Ok(());
+                }
+                got_update = true;
             }
-            got_update = true;
-        }
-        if got_update {
-            dirty = true;
-        }
+            if got_update {
+                dirty = true;
+            }
 
-        if dirty {
-            tui.draw(|frame| {
-                tui::app_layout::render_app(frame, &chat_state, &input, &status);
-            })?;
-            dirty = false;
-        }
+            if dirty {
+                tui.draw(|frame| {
+                    tui::app_layout::render_app(frame, &chat_state, &input, &status);
+                })?;
+                dirty = false;
+            }
 
-        let poll_timeout = if status.is_streaming {
-            Duration::from_millis(16)
-        } else {
-            Duration::from_millis(100)
-        };
+            let poll_timeout = if status.is_streaming {
+                Duration::from_millis(16)
+            } else {
+                Duration::from_millis(100)
+            };
 
-        if let Some(event) = poll_event(poll_timeout) {
-            match event {
-                TuiEvent::Key(key) => {
-                    dirty = true;
-                    if key.code == KeyCode::Char('c')
-                        && key.modifiers.contains(KeyModifiers::CONTROL)
-                    {
-                        let _ = ctrl_tx.send(ControllerMessage::CancelTask);
-                        continue;
-                    }
-                    if key.code == KeyCode::Char('y')
-                        && key.modifiers.contains(KeyModifiers::CONTROL)
-                    {
-                        let _ = ctrl_tx.send(ControllerMessage::ToggleYolo);
-                        continue;
-                    }
-                    if let Some(text) = input.handle_key(key) {
-                        if let Some((cmd, args)) = crate::commands::parse_slash_command(&text) {
-                            let _ = ctrl_tx.send(ControllerMessage::SlashCommand(cmd, args));
-                        } else {
-                            chat_state.push_message(ChatMessage {
-                                role: ChatRole::User,
-                                content: text.clone(),
-                                timestamp: chrono::Utc::now(),
-                                streaming: false,
-                            });
-                            let _ = ctrl_tx.send(ControllerMessage::UserSubmit {
-                                text,
-                                images: vec![],
-                            });
+            if let Some(event) = poll_event(poll_timeout) {
+                match event {
+                    TuiEvent::Key(key) => {
+                        dirty = true;
+                        if key.code == KeyCode::Char('c')
+                            && key.modifiers.contains(KeyModifiers::CONTROL)
+                        {
+                            let _ = ctrl_tx.send(ControllerMessage::CancelTask);
+                            continue;
+                        }
+                        if key.code == KeyCode::Char('y')
+                            && key.modifiers.contains(KeyModifiers::CONTROL)
+                        {
+                            let _ = ctrl_tx.send(ControllerMessage::ToggleYolo);
+                            continue;
+                        }
+                        if let Some(text) = input.handle_key(key) {
+                            if let Some((cmd, args)) = crate::commands::parse_slash_command(&text) {
+                                let _ =
+                                    ctrl_tx.send(ControllerMessage::SlashCommand(cmd, args));
+                            } else {
+                                chat_state.push_message(ChatMessage {
+                                    role: ChatRole::User,
+                                    content: text.clone(),
+                                    timestamp: chrono::Utc::now(),
+                                    streaming: false,
+                                });
+                                let _ = ctrl_tx.send(ControllerMessage::UserSubmit {
+                                    text,
+                                    images: vec![],
+                                });
+                            }
                         }
                     }
+                    TuiEvent::Resize(_, _) => dirty = true,
+                    TuiEvent::Tick | TuiEvent::Mouse(_) => {}
                 }
-                TuiEvent::Resize(_, _) => dirty = true,
-                TuiEvent::Tick | TuiEvent::Mouse(_) => {}
             }
+        }
+    }));
+
+    tui.restore()?;
+
+    match result {
+        Ok(inner) => inner,
+        Err(payload) => {
+            let msg = payload
+                .downcast_ref::<String>()
+                .map(String::as_str)
+                .or_else(|| payload.downcast_ref::<&str>().copied())
+                .unwrap_or("unknown panic");
+            Err(anyhow::anyhow!("TUI panicked: {msg}"))
         }
     }
 }

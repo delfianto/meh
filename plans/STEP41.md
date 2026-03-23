@@ -280,16 +280,16 @@ mod cwd_tests {
 ```
 
 ## Acceptance Criteria
-- [ ] YOLO mode executes tools immediately without approval prompt
-- [ ] Ask mode sends `ToolApproval` to TUI and waits for `ApprovalResponse`
-- [ ] Approved tools execute; denied tools return error to agent
-- [ ] Pending tool calls tracked in `HashMap` and cleaned up
-- [ ] Primary channels bounded with backpressure (4096 capacity)
-- [ ] `try_send` used for non-critical updates; no deadlocks
-- [ ] Working directory tracked as `cwd` field on Controller, not re-read from env
-- [ ] `catch_unwind` around TUI draw loop; terminal always restored
-- [ ] Panic converted to `anyhow::Error`, not process termination
-- [ ] All existing tests pass (no regressions)
-- [ ] mimalloc set as global allocator
-- [ ] `cargo clippy -- -D warnings` passes
-- [ ] `cargo test` passes
+- [x] YOLO mode executes tools immediately without approval prompt
+- [x] Ask mode sends `ToolApproval` to TUI and waits for `ApprovalResponse`
+- [x] Approved tools execute; denied tools return error to agent
+- [x] Pending tool calls tracked in `HashMap` and cleaned up
+- [x] UI channel bounded (4096) with `try_send` backpressure
+- [x] `try_send` used for non-critical updates; no deadlocks
+- [x] Working directory tracked as `cwd` field on Controller, not re-read from env
+- [x] `catch_unwind` around TUI draw loop; terminal always restored
+- [x] Panic converted to `anyhow::Error`, not process termination
+- [x] All existing tests pass (no regressions)
+- [x] mimalloc set as global allocator
+- [x] `cargo clippy -- -D warnings` passes
+- [x] `cargo test` passes
