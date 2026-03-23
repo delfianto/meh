@@ -336,9 +336,10 @@ pub fn build_api_rows(config: &AppConfig) -> Vec<SettingRow> {
             label: "Anthropic Model".to_string(),
             value: SettingValue::Select {
                 options: vec![
-                    "claude-sonnet-4-20250514".to_string(),
-                    "claude-opus-4-20250514".to_string(),
-                    "claude-haiku-4-5-20251001".to_string(),
+                    "claude-sonnet-4-6".to_string(),
+                    "claude-opus-4-6".to_string(),
+                    "claude-haiku-4-5".to_string(),
+                    "claude-sonnet-4-5".to_string(),
                 ],
                 selected: 0,
             },
@@ -366,6 +367,19 @@ pub fn build_api_rows(config: &AppConfig) -> Vec<SettingRow> {
             description: "Direct key or $ENV_VAR".to_string(),
         },
         SettingRow {
+            key: "provider.openai.model".to_string(),
+            label: "OpenAI Model".to_string(),
+            value: SettingValue::Select {
+                options: vec![
+                    "gpt-5.4".to_string(),
+                    "gpt-5.4-mini".to_string(),
+                    "gpt-5.4-nano".to_string(),
+                ],
+                selected: 0,
+            },
+            description: "Model ID".to_string(),
+        },
+        SettingRow {
             key: "provider.gemini.api_key".to_string(),
             label: "Gemini API Key".to_string(),
             value: SettingValue::Secret(
@@ -385,6 +399,21 @@ pub fn build_api_rows(config: &AppConfig) -> Vec<SettingRow> {
                     .unwrap_or_default(),
             ),
             description: "Direct key or $ENV_VAR".to_string(),
+        },
+        SettingRow {
+            key: "provider.gemini.model".to_string(),
+            label: "Gemini Model".to_string(),
+            value: SettingValue::Select {
+                options: vec![
+                    "gemini-3.1-pro-preview".to_string(),
+                    "gemini-3-flash-preview".to_string(),
+                    "gemini-3.1-flash-lite-preview".to_string(),
+                    "gemini-2.5-pro".to_string(),
+                    "gemini-2.5-flash".to_string(),
+                ],
+                selected: 0,
+            },
+            description: "Model ID".to_string(),
         },
         SettingRow {
             key: "provider.openrouter.api_key".to_string(),
@@ -478,16 +507,22 @@ pub fn build_features_rows(config: &AppConfig) -> Vec<SettingRow> {
 
 /// Render the settings panel into the given area.
 pub fn render_settings(frame: &mut Frame, area: Rect, view: &SettingsView) {
-    // Clear the entire settings area to prevent stale content from
-    // previous frames bleeding through (ratatui double-buffer diff).
-    frame.render_widget(Clear, area);
+    // Fill entire area with a solid background block first.
+    // This overwrites EVERY cell, preventing stale content from previous
+    // frames bleeding through ratatui's double-buffer diff.
+    let bg = Block::default()
+        .borders(Borders::TOP)
+        .border_style(Style::default().fg(Color::DarkGray))
+        .style(Style::default().bg(Color::Black));
+    frame.render_widget(bg, area);
 
+    let inner = Block::default().borders(Borders::TOP).inner(area);
     let chunks = Layout::vertical([
         Constraint::Length(1),
         Constraint::Min(3),
         Constraint::Length(1),
     ])
-    .split(area);
+    .split(inner);
 
     let tab_titles = vec!["1:API", "2:Permissions", "3:Features"];
     let tab_idx = match view.tab {
@@ -497,7 +532,8 @@ pub fn render_settings(frame: &mut Frame, area: Rect, view: &SettingsView) {
     };
     let tabs = Tabs::new(tab_titles)
         .select(tab_idx)
-        .highlight_style(Style::default().bold().fg(Color::Cyan))
+        .highlight_style(Style::default().bold().fg(Color::White).bg(Color::DarkGray))
+        .style(Style::default().fg(Color::Gray).bg(Color::Black))
         .divider(" | ");
     frame.render_widget(tabs, chunks[0]);
 
@@ -521,9 +557,9 @@ pub fn render_settings(frame: &mut Frame, area: Rect, view: &SettingsView) {
             };
             let line = format!("{cursor}{:<32} {val}", row.label);
             let style = if is_selected {
-                Style::default().fg(Color::Cyan).bold()
+                Style::default().fg(Color::Cyan).bold().bg(Color::Black)
             } else {
-                Style::default().fg(Color::Gray)
+                Style::default().fg(Color::Gray).bg(Color::Black)
             };
             ListItem::new(line).style(style)
         })
@@ -534,9 +570,10 @@ pub fn render_settings(frame: &mut Frame, area: Rect, view: &SettingsView) {
             Block::default()
                 .borders(Borders::ALL)
                 .border_style(Style::default().fg(Color::DarkGray))
-                .title(" Settings "),
+                .title(" Settings ")
+                .style(Style::default().bg(Color::Black)),
         )
-        .style(Style::default().bg(Color::Reset));
+        .style(Style::default().bg(Color::Black));
     frame.render_widget(list, chunks[1]);
 
     let help = if view.editing.is_some() {
@@ -544,7 +581,8 @@ pub fn render_settings(frame: &mut Frame, area: Rect, view: &SettingsView) {
     } else {
         "\u{2190}\u{2192}: tabs  \u{2191}\u{2193}: navigate  Enter: edit  Space: toggle  Esc: close"
     };
-    let help_bar = Paragraph::new(help).style(Style::default().fg(Color::DarkGray));
+    let help_bar =
+        Paragraph::new(help).style(Style::default().fg(Color::DarkGray).bg(Color::Black));
     frame.render_widget(help_bar, chunks[2]);
 
     if let Some(ref edit) = view.editing {

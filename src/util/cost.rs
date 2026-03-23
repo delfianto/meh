@@ -69,16 +69,25 @@ pub fn cost_level(cost: f64) -> CostLevel {
 /// Returns `(input_price_per_mtok, output_price_per_mtok)` if known.
 pub fn get_known_pricing(model_id: &str) -> Option<(f64, f64)> {
     match model_id {
-        "claude-opus-4-20250514" => Some((15.0, 75.0)),
-        "claude-sonnet-4-20250514" => Some((3.0, 15.0)),
-        "claude-haiku-4-5-20251001" => Some((0.80, 4.0)),
-        "gpt-4.1" | "o3" => Some((2.0, 8.0)),
-        "gpt-4.1-mini" => Some((0.4, 1.6)),
-        "gpt-4.1-nano" => Some((0.1, 0.4)),
+        // Anthropic
+        "claude-opus-4-6" => Some((5.0, 25.0)),
+        "claude-sonnet-4-6"
+        | "claude-sonnet-4-5"
+        | "claude-sonnet-4-5-20250929"
+        | "claude-sonnet-4-20250514"
+        | "claude-sonnet-4-0" => Some((3.0, 15.0)),
+        "claude-haiku-4-5" | "claude-haiku-4-5-20251001" => Some((1.0, 5.0)),
+        "claude-opus-4-20250514" | "claude-opus-4-0" => Some((15.0, 75.0)),
+        // OpenAI
+        "gpt-5.4" | "gpt-4.1" | "o3" => Some((2.0, 8.0)),
+        "gpt-5.4-mini" | "gpt-4.1-mini" => Some((0.4, 1.6)),
+        "gpt-5.4-nano" => Some((0.1, 0.4)),
         "gpt-4o" => Some((2.5, 10.0)),
         "o4-mini" => Some((1.1, 4.4)),
-        "gemini-2.5-pro" => Some((1.25, 10.0)),
-        "gemini-2.5-flash" => Some((0.15, 0.60)),
+        // Google Gemini
+        "gemini-3.1-pro-preview" | "gemini-2.5-pro" => Some((1.25, 10.0)),
+        "gemini-3-flash-preview" | "gemini-2.5-flash" => Some((0.15, 0.60)),
+        "gemini-3.1-flash-lite-preview" => Some((0.075, 0.30)),
         _ => None,
     }
 }
@@ -189,15 +198,15 @@ mod tests {
 
     #[test]
     fn known_pricing_anthropic() {
-        let (input, output) = get_known_pricing("claude-sonnet-4-20250514").unwrap();
+        let (input, output) = get_known_pricing("claude-sonnet-4-6").unwrap();
         assert!((input - 3.0).abs() < f64::EPSILON);
         assert!((output - 15.0).abs() < f64::EPSILON);
     }
 
     #[test]
     fn known_pricing_openai() {
+        assert!(get_known_pricing("gpt-5.4").is_some());
         assert!(get_known_pricing("gpt-4.1").is_some());
-        assert!(get_known_pricing("o3").is_some());
     }
 
     #[test]

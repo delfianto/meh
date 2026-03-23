@@ -38,7 +38,7 @@ impl AnthropicProvider {
             api_key: api_key.to_string(),
             base_url: base_url.unwrap_or(DEFAULT_BASE_URL).to_string(),
             model_info: ModelInfo {
-                id: "claude-sonnet-4-20250514".to_string(),
+                id: "claude-sonnet-4-6".to_string(),
                 name: "Claude Sonnet 4".to_string(),
                 provider: "anthropic".to_string(),
                 max_tokens: 8192,
@@ -559,7 +559,7 @@ mod tests {
     #[test]
     fn api_request_serialization() {
         let request = ApiRequest {
-            model: "claude-sonnet-4-20250514".to_string(),
+            model: "claude-sonnet-4-6".to_string(),
             max_tokens: 8192,
             temperature: None,
             system: "You are helpful.".to_string(),
@@ -572,7 +572,7 @@ mod tests {
             }),
         };
         let json = serde_json::to_value(&request).unwrap();
-        assert_eq!(json["model"], "claude-sonnet-4-20250514");
+        assert_eq!(json["model"], "claude-sonnet-4-6");
         assert_eq!(json["system"], "You are helpful.");
         assert_eq!(json["thinking"]["budget_tokens"], 10000);
         assert!(json["stream"].as_bool().unwrap());
@@ -581,7 +581,7 @@ mod tests {
     #[test]
     fn api_request_without_thinking() {
         let request = ApiRequest {
-            model: "claude-sonnet-4-20250514".to_string(),
+            model: "claude-sonnet-4-6".to_string(),
             max_tokens: 4096,
             temperature: Some(0.7),
             system: String::new(),
@@ -674,7 +674,7 @@ mod integration_tests {
         let provider = AnthropicProvider::new(&api_key, None).unwrap();
 
         let config = ModelConfig {
-            model_id: "claude-sonnet-4-20250514".to_string(),
+            model_id: "claude-sonnet-4-6".to_string(),
             max_tokens: 100,
             temperature: Some(0.0),
             thinking_budget: None,
@@ -724,7 +724,7 @@ mod integration_tests {
         let provider = AnthropicProvider::new(&api_key, None).unwrap();
 
         let config = ModelConfig {
-            model_id: "claude-sonnet-4-20250514".to_string(),
+            model_id: "claude-sonnet-4-6".to_string(),
             max_tokens: 16000,
             temperature: None,
             thinking_budget: Some(10000),

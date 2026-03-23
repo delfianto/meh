@@ -103,7 +103,7 @@ mod tests {
     fn make_status() -> StatusBarState {
         StatusBarState {
             mode: "ACT".to_string(),
-            model_name: "claude-sonnet-4-20250514".to_string(),
+            model_name: "claude-sonnet-4-6".to_string(),
             provider: "anthropic".to_string(),
             total_tokens: 0,
             total_cost: 0.0,
