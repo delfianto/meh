@@ -73,6 +73,13 @@
 | 36 | [STEP36.md](STEP36.md) | Graceful cancellation (Ctrl+C mid-stream) | `[x]` | PR #33 |
 | 37 | [STEP37.md](STEP37.md) | System prompt builder (modular assembly) | `[x]` | PR #34 |
 
+## Phase 7: Integration & Hardening
+
+| Step | File | Description | Status | Notes |
+|------|------|-------------|--------|-------|
+| 38 | [STEP38.md](STEP38.md) | Integration wiring (connect all modules to runtime) | `[ ]` | Depends on: all prior |
+| 39 | [STEP39.md](STEP39.md) | Integration tests (end-to-end verification) | `[ ]` | Depends on: 38 |
+
 ## Summary
 
 | Phase | Total | Not Started | In Progress | Complete | Blocked |
@@ -83,7 +90,8 @@
 | 4. Advanced | 8 | 0 | 0 | 8 | 0 |
 | 5. Polish | 6 | 0 | 0 | 6 | 0 |
 | 6. Critical | 7 | 0 | 0 | 7 | 0 |
-| **Total** | **37** | **0** | **0** | **37** | **0** |
+| 7. Integration | 2 | 2 | 0 | 0 | 0 |
+| **Total** | **39** | **2** | **0** | **37** | **0** |
 
 ---
 
