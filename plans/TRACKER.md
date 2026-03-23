@@ -65,7 +65,7 @@
 
 | Step | File | Description | Status | Notes |
 |------|------|-------------|--------|-------|
-| 31 | [STEP31.md](STEP31.md) | Context window management + summarization | `[ ]` | Depends on: 25, 07 |
+| 31 | [STEP31.md](STEP31.md) | Context window management + summarization | `[x]` | PR #28 |
 | 32 | [STEP32.md](STEP32.md) | .mehignore path protection | `[ ]` | Depends on: 12, 14, 15 |
 | 33 | [STEP33.md](STEP33.md) | Environment detection (OS, shell, workspace) | `[ ]` | Depends on: 01 |
 | 34 | [STEP34.md](STEP34.md) | User rules system (.mehrules) | `[ ]` | Depends on: 33, 29 |
@@ -82,8 +82,8 @@
 | 3. Tools | 6 | 0 | 0 | 6 | 0 |
 | 4. Advanced | 8 | 0 | 0 | 8 | 0 |
 | 5. Polish | 6 | 0 | 0 | 6 | 0 |
-| 6. Critical | 7 | 7 | 0 | 0 | 0 |
-| **Total** | **37** | **7** | **0** | **30** | **0** |
+| 6. Critical | 7 | 6 | 0 | 1 | 0 |
+| **Total** | **37** | **6** | **0** | **31** | **0** |
 
 ---
 
