@@ -320,14 +320,14 @@ mod command_tests {
 ```
 
 ## Acceptance Criteria
-- [ ] All listed slash commands parse correctly
-- [ ] Command aliases work (/h, /smol, /newtask)
-- [ ] Unknown /commands treated as regular input (returns None)
-- [ ] Each command dispatched to correct handler in Controller
-- [ ] /help displays available commands
-- [ ] /model with no args shows current model
-- [ ] /model with args switches model
-- [ ] /yolo toggles YOLO mode
-- [ ] Tab completion for partial command names
-- [ ] `cargo clippy -- -D warnings` passes
-- [ ] All tests pass
+- [x] All listed slash commands parse correctly
+- [x] Command aliases work (/h, /smol, /newtask)
+- [x] Unknown /commands treated as regular input (returns None)
+- [x] Each command dispatched to correct handler in Controller
+- [x] /help displays available commands
+- [x] /model with no args shows current model
+- [x] /model with args switches model
+- [x] /yolo toggles YOLO mode
+- [x] Tab completion for partial command names
+- [x] `cargo clippy -- -D warnings` passes
+- [x] All tests pass

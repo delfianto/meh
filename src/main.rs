@@ -3,6 +3,7 @@
 
 mod agent;
 mod app;
+mod commands;
 mod context;
 mod controller;
 mod error;

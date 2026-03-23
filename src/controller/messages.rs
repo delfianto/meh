@@ -41,6 +41,9 @@ pub enum ControllerMessage {
     ConfigReload,
     /// MCP settings file changed on disk — reload servers.
     McpReload,
+
+    /// User entered a slash command.
+    SlashCommand(crate::commands::SlashCommand, String),
 }
 
 /// A tool call that needs approval and execution.

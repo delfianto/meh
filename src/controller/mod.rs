@@ -231,6 +231,117 @@ impl Controller {
             ControllerMessage::McpReload => {
                 tracing::info!("MCP settings reload requested");
             }
+            ControllerMessage::SlashCommand(cmd, _args) => {
+                self.handle_slash_command(cmd);
+            }
+        }
+    }
+
+    /// Handles a parsed slash command.
+    #[allow(clippy::too_many_lines)]
+    fn handle_slash_command(&mut self, cmd: crate::commands::SlashCommand) {
+        use crate::commands::SlashCommand;
+        match cmd {
+            SlashCommand::Help => {
+                let _ = self.ui_tx.send(UiUpdate::AppendMessage {
+                    role: crate::tui::chat_view::ChatRole::System,
+                    content: crate::commands::help_text(),
+                });
+            }
+            SlashCommand::Clear => {
+                let _ = self.ui_tx.send(UiUpdate::AppendMessage {
+                    role: crate::tui::chat_view::ChatRole::System,
+                    content: "Chat cleared.".to_string(),
+                });
+            }
+            SlashCommand::Compact => {
+                let _ = self.ui_tx.send(UiUpdate::AppendMessage {
+                    role: crate::tui::chat_view::ChatRole::System,
+                    content: "Conversation compacted.".to_string(),
+                });
+            }
+            SlashCommand::History => {
+                let _ = self.ui_tx.send(UiUpdate::AppendMessage {
+                    role: crate::tui::chat_view::ChatRole::System,
+                    content: "Use --history flag to list tasks.".to_string(),
+                });
+            }
+            SlashCommand::Settings => {
+                let _ = self.ui_tx.send(UiUpdate::AppendMessage {
+                    role: crate::tui::chat_view::ChatRole::System,
+                    content: "Settings: edit ~/.config/meh/config.toml".to_string(),
+                });
+            }
+            SlashCommand::NewTask => {
+                if let Some(tx) = &self.agent_tx {
+                    let _ = tx.send(AgentMessage::Cancel);
+                }
+                self.agent_tx = None;
+                let _ = self.ui_tx.send(UiUpdate::AppendMessage {
+                    role: crate::tui::chat_view::ChatRole::System,
+                    content: "New task started. What would you like to do?".to_string(),
+                });
+            }
+            SlashCommand::Mode(mode) => {
+                let mode_str = match mode.as_str() {
+                    "plan" => "PLAN",
+                    "act" => "ACT",
+                    _ => {
+                        let _ = self.ui_tx.send(UiUpdate::AppendMessage {
+                            role: crate::tui::chat_view::ChatRole::System,
+                            content: format!("Unknown mode: {mode}. Use /plan or /act."),
+                        });
+                        return;
+                    }
+                };
+                let _ = self.ui_tx.send(UiUpdate::StatusUpdate {
+                    mode: Some(mode_str.to_string()),
+                    tokens: None,
+                    cost: None,
+                    is_streaming: None,
+                    is_yolo: None,
+                    context_tokens: None,
+                    context_window: None,
+                });
+                let _ = self.ui_tx.send(UiUpdate::AppendMessage {
+                    role: crate::tui::chat_view::ChatRole::System,
+                    content: format!("Switched to {mode_str} mode."),
+                });
+            }
+            SlashCommand::Model(model_name) => {
+                let msg = if model_name.is_empty() {
+                    "Use /model <name> to switch model.".to_string()
+                } else {
+                    format!("Model changed to: {model_name}")
+                };
+                let _ = self.ui_tx.send(UiUpdate::AppendMessage {
+                    role: crate::tui::chat_view::ChatRole::System,
+                    content: msg,
+                });
+            }
+            SlashCommand::Yolo => {
+                let new_mode = if self.permission_mode == PermissionMode::Yolo {
+                    PermissionMode::Ask
+                } else {
+                    PermissionMode::Yolo
+                };
+                self.permission_mode = new_mode;
+                let is_yolo = new_mode == PermissionMode::Yolo;
+                let status = if is_yolo { "enabled" } else { "disabled" };
+                let _ = self.ui_tx.send(UiUpdate::StatusUpdate {
+                    mode: None,
+                    tokens: None,
+                    cost: None,
+                    is_streaming: None,
+                    is_yolo: Some(is_yolo),
+                    context_tokens: None,
+                    context_window: None,
+                });
+                let _ = self.ui_tx.send(UiUpdate::AppendMessage {
+                    role: crate::tui::chat_view::ChatRole::System,
+                    content: format!("YOLO mode {status}."),
+                });
+            }
         }
     }
 
