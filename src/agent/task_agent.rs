@@ -382,6 +382,9 @@ mod tests {
                     supports_images: false,
                     input_price_per_mtok: 0.0,
                     output_price_per_mtok: 0.0,
+                    cache_read_price_per_mtok: None,
+                    cache_write_price_per_mtok: None,
+                    thinking_price_per_mtok: None,
                 },
             }
         }

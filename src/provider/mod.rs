@@ -108,6 +108,15 @@ pub struct ModelInfo {
     pub input_price_per_mtok: f64,
     /// Price per million output tokens (USD).
     pub output_price_per_mtok: f64,
+    /// Price per million cache-read tokens (USD). Provider-specific.
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    pub cache_read_price_per_mtok: Option<f64>,
+    /// Price per million cache-write tokens (USD). Provider-specific.
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    pub cache_write_price_per_mtok: Option<f64>,
+    /// Price per million thinking/reasoning tokens (USD). Falls back to output price.
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    pub thinking_price_per_mtok: Option<f64>,
 }
 
 /// Configuration passed to [`Provider::create_message`].
@@ -282,6 +291,9 @@ mod stream_chunk_tests {
             supports_images: true,
             input_price_per_mtok: 1.0,
             output_price_per_mtok: 5.0,
+            cache_read_price_per_mtok: None,
+            cache_write_price_per_mtok: None,
+            thinking_price_per_mtok: None,
         };
         assert!(info.supports_tools);
         assert!(!info.supports_thinking);

@@ -1,5 +1,6 @@
 //! Status bar showing mode, model, token count, context utilization, and cost.
 
+use crate::util::cost::{CostLevel, cost_level, format_cost};
 use crate::util::tokens::{context_utilization, format_tokens};
 use ratatui::prelude::*;
 use ratatui::widgets::Paragraph;
@@ -83,8 +84,12 @@ pub fn render_status_bar(frame: &mut Frame, area: Rect, state: &StatusBarState) 
         ),
         Span::styled("  ·  ", Style::default().fg(Color::DarkGray)),
         Span::styled(
-            format!("${:.4}", state.total_cost),
-            Style::default().fg(Color::Gray),
+            format_cost(state.total_cost),
+            Style::default().fg(match cost_level(state.total_cost) {
+                CostLevel::Normal => Color::Green,
+                CostLevel::Moderate => Color::Yellow,
+                CostLevel::Expensive => Color::Red,
+            }),
         ),
         Span::styled(
             streaming_indicator.to_string(),

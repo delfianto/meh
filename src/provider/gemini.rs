@@ -294,6 +294,9 @@ fn gemini_model_info(model_id: &str) -> ModelInfo {
             supports_images: true,
             input_price_per_mtok: 1.25,
             output_price_per_mtok: 10.0,
+            cache_read_price_per_mtok: None,
+            cache_write_price_per_mtok: None,
+            thinking_price_per_mtok: None,
         },
         "gemini-2.5-flash" => ModelInfo {
             id: "gemini-2.5-flash".into(),
@@ -306,6 +309,9 @@ fn gemini_model_info(model_id: &str) -> ModelInfo {
             supports_images: true,
             input_price_per_mtok: 0.15,
             output_price_per_mtok: 0.60,
+            cache_read_price_per_mtok: None,
+            cache_write_price_per_mtok: None,
+            thinking_price_per_mtok: None,
         },
         other => ModelInfo {
             id: other.into(),
@@ -318,6 +324,9 @@ fn gemini_model_info(model_id: &str) -> ModelInfo {
             supports_images: true,
             input_price_per_mtok: 0.15,
             output_price_per_mtok: 0.60,
+            cache_read_price_per_mtok: None,
+            cache_write_price_per_mtok: None,
+            thinking_price_per_mtok: None,
         },
     }
 }
