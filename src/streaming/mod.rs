@@ -28,6 +28,7 @@
 pub mod chunk_batcher;
 pub mod thinking_parser;
 pub mod tool_parser;
+pub mod ui_batcher;
 
 use crate::provider::StreamChunk;
 use chunk_batcher::ChunkBatcher;
