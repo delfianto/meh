@@ -236,16 +236,20 @@ fn run_tui(
                         continue;
                     }
                     if let Some(text) = input.handle_key(key) {
-                        chat_state.push_message(ChatMessage {
-                            role: ChatRole::User,
-                            content: text.clone(),
-                            timestamp: chrono::Utc::now(),
-                            streaming: false,
-                        });
-                        let _ = ctrl_tx.send(ControllerMessage::UserSubmit {
-                            text,
-                            images: vec![],
-                        });
+                        if let Some((cmd, args)) = crate::commands::parse_slash_command(&text) {
+                            let _ = ctrl_tx.send(ControllerMessage::SlashCommand(cmd, args));
+                        } else {
+                            chat_state.push_message(ChatMessage {
+                                role: ChatRole::User,
+                                content: text.clone(),
+                                timestamp: chrono::Utc::now(),
+                                streaming: false,
+                            });
+                            let _ = ctrl_tx.send(ControllerMessage::UserSubmit {
+                                text,
+                                images: vec![],
+                            });
+                        }
                     }
                 }
                 TuiEvent::Resize(_, _) => dirty = true,
