@@ -18,7 +18,9 @@ use crate::agent::{AgentMessage, TaskAgent};
 use crate::permission::PermissionMode;
 use crate::provider::{self, ModelConfig, StreamChunk};
 use crate::state::StateManager;
+use crate::streaming::ui_batcher::UiBatcher;
 use messages::{ControllerMessage, ToolCallResult, UiUpdate};
+use std::time::Duration;
 use tokio::sync::mpsc;
 
 /// The Controller is the central message router.
@@ -41,6 +43,8 @@ pub struct Controller {
     permission_mode: PermissionMode,
     /// Whether the controller is running.
     running: bool,
+    /// Batches rapid stream updates for smooth TUI rendering.
+    batcher: UiBatcher,
 }
 
 impl Controller {
@@ -63,23 +67,42 @@ impl Controller {
             state,
             permission_mode,
             running: true,
+            batcher: UiBatcher::new(60),
         };
         (ctrl, ctrl_tx, ui_rx)
     }
 
     /// Main message loop — runs as a tokio task.
+    ///
+    /// Uses `tokio::select!` to handle both incoming messages and periodic
+    /// tick-based flushing of batched UI updates.
     pub async fn run(mut self) -> anyhow::Result<()> {
         tracing::info!("Controller started");
         while self.running {
-            if let Some(msg) = self.rx.recv().await {
-                self.handle_message(msg).await;
-            } else {
-                tracing::info!("All senders dropped, controller shutting down");
-                break;
+            tokio::select! {
+                msg = self.rx.recv() => {
+                    if let Some(m) = msg {
+                        self.handle_message(m).await;
+                    } else {
+                        tracing::info!("All senders dropped, controller shutting down");
+                        break;
+                    }
+                }
+                () = tokio::time::sleep(Duration::from_millis(16)), if self.batcher.has_pending() => {
+                    self.flush_batcher();
+                }
             }
         }
+        self.flush_batcher();
         tracing::info!("Controller stopped");
         Ok(())
+    }
+
+    /// Flushes batched updates to the TUI.
+    fn flush_batcher(&mut self) {
+        for update in self.batcher.flush() {
+            let _ = self.ui_tx.send(update);
+        }
     }
 
     /// Dispatches a single message to the appropriate handler.
@@ -157,6 +180,7 @@ impl Controller {
             ControllerMessage::ToolCallResult(_) => {}
             ControllerMessage::TaskComplete(result) => {
                 tracing::info!(task_id = result.task_id, "Task completed");
+                self.flush_batcher();
                 self.agent_tx = None;
                 let _ = self.ui_tx.send(UiUpdate::StreamEnd);
                 if let Some(msg) = result.completion_message {
@@ -176,6 +200,7 @@ impl Controller {
                 });
             }
             ControllerMessage::TaskError(error) => {
+                self.flush_batcher();
                 tracing::error!(%error, "Task error");
                 let _ = self.ui_tx.send(UiUpdate::AppendMessage {
                     role: crate::tui::chat_view::ChatRole::System,
@@ -260,27 +285,32 @@ impl Controller {
         tokio::spawn(agent.run());
     }
 
-    /// Forwards stream chunks to the TUI as appropriate `UiUpdate`s.
-    fn handle_stream_chunk(&self, chunk: StreamChunk) {
+    /// Forwards stream chunks to the TUI, batching text and thinking deltas.
+    fn handle_stream_chunk(&mut self, chunk: StreamChunk) {
         match chunk {
             StreamChunk::Text { delta } => {
-                let _ = self.ui_tx.send(UiUpdate::StreamContent { delta });
+                self.batcher.push_text(&delta);
+                if self.batcher.should_flush() {
+                    self.flush_batcher();
+                }
             }
             StreamChunk::Thinking { delta, .. } => {
                 if !delta.is_empty() {
-                    let _ = self.ui_tx.send(UiUpdate::ThinkingContent { delta });
+                    self.batcher.push_thinking(&delta);
+                    if self.batcher.should_flush() {
+                        self.flush_batcher();
+                    }
                 }
             }
             StreamChunk::Usage(usage) => {
-                let _ = self.ui_tx.send(UiUpdate::StatusUpdate {
-                    mode: None,
-                    tokens: Some(usage.input_tokens + usage.output_tokens),
-                    cost: usage.total_cost,
-                    is_streaming: None,
-                    is_yolo: None,
-                    context_tokens: Some(usage.input_tokens),
-                    context_window: None,
-                });
+                self.batcher.push_status(
+                    Some(usage.input_tokens + usage.output_tokens),
+                    usage.total_cost,
+                    Some(usage.input_tokens),
+                );
+                if self.batcher.should_flush() {
+                    self.flush_batcher();
+                }
             }
             _ => {}
         }

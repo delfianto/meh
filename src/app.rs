@@ -194,21 +194,32 @@ fn run_tui(
         });
     }
 
+    let mut dirty = true;
+
     loop {
+        let mut got_update = false;
         while let Ok(update) = ui_rx.try_recv() {
             if apply_ui_update(update, &mut chat_state, &mut status, &mut stream_state) {
                 tui.restore()?;
                 return Ok(());
             }
+            got_update = true;
+        }
+        if got_update {
+            dirty = true;
         }
 
-        tui.draw(|frame| {
-            tui::app_layout::render_app(frame, &chat_state, &input, &status);
-        })?;
+        if dirty {
+            tui.draw(|frame| {
+                tui::app_layout::render_app(frame, &chat_state, &input, &status);
+            })?;
+            dirty = false;
+        }
 
         if let Some(event) = poll_event(Duration::from_millis(16)) {
             match event {
                 TuiEvent::Key(key) => {
+                    dirty = true;
                     if key.code == KeyCode::Char('c')
                         && key.modifiers.contains(KeyModifiers::CONTROL)
                     {
@@ -234,7 +245,8 @@ fn run_tui(
                         });
                     }
                 }
-                TuiEvent::Resize(_, _) | TuiEvent::Tick | TuiEvent::Mouse(_) => {}
+                TuiEvent::Resize(_, _) => dirty = true,
+                TuiEvent::Tick | TuiEvent::Mouse(_) => {}
             }
         }
     }
