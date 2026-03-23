@@ -49,6 +49,9 @@ impl App {
 
         let (controller, ctrl_tx, ui_rx) = Controller::new(self.state.clone(), permission_mode);
 
+        let config_path = self.state.config_path().await;
+        crate::state::watcher::spawn_config_watcher(config_path, ctrl_tx.clone());
+
         let controller_handle = tokio::spawn(controller.run());
 
         let initial_prompt = self.cli.prompt.clone();

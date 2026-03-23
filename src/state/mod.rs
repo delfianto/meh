@@ -27,6 +27,7 @@ pub mod config;
 pub mod history;
 pub mod secrets;
 pub mod task_state;
+pub mod watcher;
 
 use config::AppConfig;
 use std::path::PathBuf;
@@ -96,6 +97,22 @@ impl StateManager {
     pub async fn resolve_api_key(&self, provider: &str) -> Option<String> {
         self.inner.read().await.config.resolve_api_key(provider)
     }
+
+    /// Reload the config from disk. On error, the old config is preserved.
+    pub async fn reload(&self) -> anyhow::Result<()> {
+        let path = self.inner.read().await.config_path.clone();
+        let new_config = AppConfig::load(Some(&path))?;
+        let mut inner = self.inner.write().await;
+        inner.config = new_config;
+        inner.dirty = false;
+        drop(inner);
+        Ok(())
+    }
+
+    /// Returns a clone of the config file path.
+    pub async fn config_path(&self) -> PathBuf {
+        self.inner.read().await.config_path.clone()
+    }
 }
 
 #[cfg(test)]
@@ -145,6 +162,48 @@ mod tests {
         let sm = StateManager::new(Some(path.clone())).await.unwrap();
         sm.persist().await.unwrap();
         assert!(!path.exists());
+    }
+
+    #[tokio::test]
+    async fn state_manager_reload() {
+        let dir = tempfile::TempDir::new().unwrap();
+        let path = dir.path().join("config.toml");
+        let config = AppConfig::default();
+        config.save(&path).unwrap();
+
+        let sm = StateManager::new(Some(path.clone())).await.unwrap();
+        assert_eq!(sm.config().await.provider.default, "anthropic");
+
+        let mut new_config = AppConfig::default();
+        new_config.provider.default = "openai".to_string();
+        new_config.save(&path).unwrap();
+
+        sm.reload().await.unwrap();
+        assert_eq!(sm.config().await.provider.default, "openai");
+    }
+
+    #[tokio::test]
+    async fn state_manager_reload_invalid_preserves_old() {
+        let dir = tempfile::TempDir::new().unwrap();
+        let path = dir.path().join("config.toml");
+        let config = AppConfig::default();
+        config.save(&path).unwrap();
+
+        let sm = StateManager::new(Some(path.clone())).await.unwrap();
+
+        std::fs::write(&path, "this is not valid toml [[[").unwrap();
+
+        let result = sm.reload().await;
+        assert!(result.is_err());
+        assert_eq!(sm.config().await.provider.default, "anthropic");
+    }
+
+    #[tokio::test]
+    async fn state_manager_config_path() {
+        let dir = tempfile::TempDir::new().unwrap();
+        let path = dir.path().join("config.toml");
+        let sm = StateManager::new(Some(path.clone())).await.unwrap();
+        assert_eq!(sm.config_path().await, path);
     }
 
     #[tokio::test]
