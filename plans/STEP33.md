@@ -249,12 +249,12 @@ mod environment_tests {
 ```
 
 ## Acceptance Criteria
-- [ ] OS detected with version string
-- [ ] Shell detected from $SHELL
-- [ ] Workspace type detected from config files
-- [ ] Languages detected from file extensions
-- [ ] Environment formatted for system prompt
-- [ ] Mixed workspace types handled correctly
-- [ ] Platform-specific version detection (macOS sw_vers, Linux /proc/version)
-- [ ] `cargo clippy -- -D warnings` passes
-- [ ] All tests pass
+- [x] OS detected with version string
+- [x] Shell detected from $SHELL
+- [x] Workspace type detected from config files
+- [x] Languages detected from file extensions
+- [x] Environment formatted for system prompt
+- [x] Mixed workspace types handled correctly
+- [x] Platform-specific version detection (macOS sw_vers, Linux /proc/version)
+- [x] `cargo clippy -- -D warnings` passes
+- [x] All tests pass

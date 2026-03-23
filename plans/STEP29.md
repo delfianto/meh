@@ -193,12 +193,12 @@ mod config_reload_tests {
 ```
 
 ## Acceptance Criteria
-- [ ] Config file changes detected via notify watcher
-- [ ] Changes debounced (100ms) to avoid rapid reloads
-- [ ] Config reload updates permission rules, model selection
+- [x] Config file changes detected via notify watcher
+- [x] Changes debounced (100ms) to avoid rapid reloads
+- [x] Config reload updates permission rules, model selection
 - [ ] MCP settings reload reconnects servers
-- [ ] Invalid config changes logged as warning, don't crash
+- [x] Invalid config changes logged as warning, don't crash
 - [ ] Self-write cycles don't trigger reload
-- [ ] Watcher runs as background task, doesn't block
-- [ ] `cargo clippy -- -D warnings` passes
-- [ ] All tests pass
+- [x] Watcher runs as background task, doesn't block
+- [x] `cargo clippy -- -D warnings` passes
+- [x] All tests pass

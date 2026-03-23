@@ -291,13 +291,13 @@ mod rules_tests {
 ```
 
 ## Acceptance Criteria
-- [ ] .mehrules loaded as single file or directory
-- [ ] Global rules from ~/.meh/rules/
-- [ ] YAML frontmatter parsed for path conditions
-- [ ] Conditional rules evaluated against active paths (glob matching)
-- [ ] Disabled rules excluded
-- [ ] Rules injected into system prompt
+- [x] .mehrules loaded as single file or directory
+- [x] Global rules from ~/.meh/rules/
+- [x] YAML frontmatter parsed for path conditions
+- [x] Conditional rules evaluated against active paths (glob matching)
+- [x] Disabled rules excluded
+- [x] Rules injected into system prompt
 - [ ] Hot-reload via file watcher
-- [ ] Only .md, .txt, and extensionless files loaded from directories
-- [ ] `cargo clippy -- -D warnings` passes
-- [ ] All tests pass
+- [x] Only .md, .txt, and extensionless files loaded from directories
+- [x] `cargo clippy -- -D warnings` passes
+- [x] All tests pass

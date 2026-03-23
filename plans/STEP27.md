@@ -286,12 +286,12 @@ mod retry_tests {
 ```
 
 ## Acceptance Criteria
-- [ ] Exponential backoff with configurable parameters
-- [ ] Jitter to prevent thundering herd
-- [ ] Rate limit retry-after header respected
-- [ ] Non-retriable errors fail immediately (401, 400)
-- [ ] Retriable errors retry up to max_retries (429, 500+, connection errors)
-- [ ] Backoff capped at max_backoff
+- [x] Exponential backoff with configurable parameters
+- [x] Jitter to prevent thundering herd
+- [x] Rate limit retry-after header respected
+- [x] Non-retriable errors fail immediately (401, 400)
+- [x] Retriable errors retry up to max_retries (429, 500+, connection errors)
+- [x] Backoff capped at max_backoff
 - [ ] Retry status shown in TUI
-- [ ] `cargo clippy -- -D warnings` passes
-- [ ] All tests pass (10+ cases)
+- [x] `cargo clippy -- -D warnings` passes
+- [x] All tests pass (10+ cases)

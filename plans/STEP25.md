@@ -184,11 +184,11 @@ mod token_tests {
 ```
 
 ## Acceptance Criteria
-- [ ] Token counting uses tiktoken-rs for accurate counts
-- [ ] Fallback encoder for unknown models
-- [ ] Context window utilization displayed as percentage
-- [ ] Token counts formatted readably (k, M suffixes)
-- [ ] Status bar shows real-time token usage
-- [ ] Total tokens and cost tracked across API calls
-- [ ] `cargo clippy -- -D warnings` passes
-- [ ] All tests pass
+- [x] Token counting uses tiktoken-rs for accurate counts
+- [x] Fallback encoder for unknown models
+- [x] Context window utilization displayed as percentage
+- [x] Token counts formatted readably (k, M suffixes)
+- [x] Status bar shows real-time token usage
+- [x] Total tokens and cost tracked across API calls
+- [x] `cargo clippy -- -D warnings` passes
+- [x] All tests pass

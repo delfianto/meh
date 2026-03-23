@@ -331,16 +331,16 @@ mod error_tests {
 ```
 
 ## Acceptance Criteria
-- [ ] Every user-facing error has a clear, actionable message
-- [ ] Provider auth errors suggest how to set API key
-- [ ] Rate limit errors show retry timing
-- [ ] Connection errors suggest checking internet
-- [ ] Command timeouts suggest manual execution
-- [ ] MCP errors point to settings file
-- [ ] Config errors suggest fix or reset
-- [ ] Panic hook restores terminal before printing
-- [ ] Startup validation catches missing API keys
+- [x] Every user-facing error has a clear, actionable message
+- [x] Provider auth errors suggest how to set API key
+- [x] Rate limit errors show retry timing
+- [x] Connection errors suggest checking internet
+- [x] Command timeouts suggest manual execution
+- [x] MCP errors point to settings file
+- [x] Config errors suggest fix or reset
+- [x] Panic hook restores terminal before printing
+- [x] Startup validation catches missing API keys
 - [ ] No raw error strings or stack traces in TUI
-- [ ] `cargo clippy -- -D warnings` passes
-- [ ] All tests pass (10+ cases)
-- [ ] This is the final step — after this, `cargo test` passes across ALL modules with ZERO warnings
+- [x] `cargo clippy -- -D warnings` passes
+- [x] All tests pass (10+ cases)
+- [x] This is the final step — after this, `cargo test` passes across ALL modules with ZERO warnings
